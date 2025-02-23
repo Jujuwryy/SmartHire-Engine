@@ -31,4 +31,16 @@ public class VectorController {
                 .body("Failed to generate embeddings: " + e.getMessage());
         }
     }
+
+    @Operation(summary = "Find matching jobs", description = "Returns jobs matching the user profile")
+    @ApiResponse(responseCode = "200", description = "Successfully found matching jobs")
+    @PostMapping("/jobs/match")
+    public ResponseEntity<List<JobMatch>> findMatchingJobs(@RequestBody String userProfile) {
+        try {
+            List<JobMatch> matches = jobMatchingService.findMatchingJobs(userProfile);
+            return ResponseEntity.ok(matches);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
