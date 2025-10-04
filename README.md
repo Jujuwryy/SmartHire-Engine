@@ -1,4 +1,4 @@
-# AIJobMatcher
+# SmartHire-Engine
 
 This project implements an advanced job matching system powered by AI vector embeddings and MongoDB Atlas Vector Search. Using natural language processing (NLP) and machine learning, it transforms job postings and user profiles into semantic vectors, enabling precise, context-aware job matching with confidence scores and detailed reasoning.
 
