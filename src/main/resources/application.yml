@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: smarthire-engine
+  
+  data:
+    mongodb:
+      database: sample_db
+      auto-index-creation: true
+  
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=1h
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+logging:
+  level:
+    root: INFO
+    com.george: DEBUG
+    org.springframework.data.mongodb: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/smarthire-engine.log
+    max-size: 10MB
+    max-history: 30
+
+app:
+  embeddings:
+    model-id: mixedbread-ai/mxbai-embed-large-v1
+    timeout-seconds: 60
+    dimension: 1024
+  matching:
+    default-limit: 10
+    max-limit: 100
+    min-limit: 1
+    default-min-confidence: 0.0
+  cache:
+    embedding-ttl-hours: 24
+    query-ttl-minutes: 30
+
