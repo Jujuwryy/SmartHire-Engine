@@ -1,0 +1,188 @@
+package com.george.service;
+
+import com.george.Vector.VectorEmbeddings;
+import com.george.dto.JobMatchRequest;
+import com.george.exception.JobMatchingException;
+import com.george.model.JobMatch;
+import com.george.model.Post;
+import com.george.util.Constants;
+import com.george.util.MatchReasonGenerator;
+import com.george.util.TextPreprocessor;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import io.micrometer.core.annotation.Timed;
+import org.bson.BsonArray;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class JobMatchingService {
+
+    private static final Logger logger = LoggerFactory.getLogger(JobMatchingService.class);
+
+    @Autowired
+    private MongoClient mongoClient;
+
+    @Autowired
+    private VectorEmbeddings vectorEmbeddings;
+    
+    @Autowired
+    private EmbeddingCacheService embeddingCacheService;
+
+    /**
+     * Finds matching jobs based on user profile using vector similarity search
+     * 
+     * @param userProfile Text description of user's skills and preferences
+     * @return List of matching jobs with similarity scores
+     */
+    public List<JobMatch> findMatchingJobs(String userProfile) {
+        return findMatchingJobs(userProfile, Constants.DEFAULT_MATCH_LIMIT, Constants.DEFAULT_MIN_CONFIDENCE);
+    }
+
+    /**
+     * Finds matching jobs with advanced filtering options
+     * 
+     * @param request JobMatchRequest containing user profile and filtering options
+     * @return List of matching jobs with similarity scores
+     */
+    public List<JobMatch> findMatchingJobs(JobMatchRequest request) {
+        return findMatchingJobs(
+            request.getUserProfile(),
+            request.getLimit(),
+            request.getMinConfidence()
+        );
+    }
+
+    /**
+     * Finds matching jobs based on user profile using vector similarity search
+     * 
+     * @param userProfile Text description of user's skills and preferences
+     * @param limit Maximum number of results to return
+     * @param minConfidence Minimum confidence score threshold
+     * @return List of matching jobs with similarity scores
+     */
+    @Timed(value = "job.matching.duration", description = "Time taken to find matching jobs")
+    public List<JobMatch> findMatchingJobs(String userProfile, Integer limit, Double minConfidence) {
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            logger.info("Starting job matching for profile: {} (limit: {}, minConfidence: {})", 
+                userProfile.substring(0, Math.min(50, userProfile.length())), limit, minConfidence);
+            
+            // Validate and preprocess inputs
+            if (userProfile == null || userProfile.trim().isEmpty()) {
+                throw new IllegalArgumentException("User profile cannot be null or empty");
+            }
+            
+            // Preprocess user profile text
+            String processedProfile = TextPreprocessor.preprocess(userProfile);
+            processedProfile = TextPreprocessor.validateAndTruncate(processedProfile, 2000);
+            
+            // Normalize limit
+            int normalizedLimit = limit != null && limit > 0 && limit <= Constants.MAX_MATCH_LIMIT 
+                ? limit : Constants.DEFAULT_MATCH_LIMIT;
+            double normalizedMinConfidence = minConfidence != null && minConfidence >= 0.0 && minConfidence <= 1.0
+                ? minConfidence : Constants.DEFAULT_MIN_CONFIDENCE;
+
+            // Generate embedding for user profile (with caching)
+            logger.debug("Generating embedding for user profile");
+            BsonArray userEmbedding = embeddingCacheService.getCachedEmbedding(processedProfile);
+
+            MongoDatabase database = mongoClient.getDatabase(Constants.DATABASE_NAME);
+            MongoCollection<Document> collection = database.getCollection(Constants.COLLECTION_NAME);
+
+            // Create aggregation pipeline for vector search
+            List<Document> pipeline = new ArrayList<>();
+            
+            // Vector search stage
+            Document searchStage = new Document("$search", new Document()
+                .append("index", Constants.VECTOR_INDEX_NAME)
+                .append("knnBeta", new Document()
+                    .append("vector", userEmbedding)
+                    .append("path", "embedding")
+                    .append("k", normalizedLimit * 2))); // Get more results for filtering
+            
+            pipeline.add(searchStage);
+            
+            // Project stage
+            Document projectStage = new Document("$project", new Document()
+                .append("jobTitle", 1)
+                .append("jobDescription", 1)
+                .append("experience", 1)
+                .append("requiredTechs", 1)
+                .append("company", 1)
+                .append("location", 1)
+                .append("employmentType", 1)
+                .append("salaryMin", 1)
+                .append("salaryMax", 1)
+                .append("currency", 1)
+                .append("score", new Document("$meta", "searchScore")));
+            
+            pipeline.add(projectStage);
+            
+            // Match stage for confidence filtering
+            if (normalizedMinConfidence > 0.0) {
+                pipeline.add(new Document("$match", 
+                    new Document("score", new Document("$gte", normalizedMinConfidence))));
+            }
+            
+            // Limit stage
+            pipeline.add(new Document("$limit", normalizedLimit));
+
+            // Execute search and convert results
+            List<JobMatch> matches = new ArrayList<>();
+            final String finalProcessedProfile = processedProfile; // Make effectively final for lambda
+            collection.aggregate(pipeline)
+                .forEach(doc -> {
+                    try {
+                        JobMatch match = new JobMatch();
+                        match.setJob(convertDocumentToPost(doc));
+                        Double score = doc.getDouble("score");
+                        match.setConfidence(score != null ? score : 0.0);
+                        match.setMatchReasons(MatchReasonGenerator.generateMatchReasons(doc, finalProcessedProfile));
+                        matches.add(match);
+                    } catch (Exception e) {
+                        logger.warn("Error processing document in search results", e);
+                    }
+                });
+
+            long queryTime = System.currentTimeMillis() - startTime;
+            logger.info("Job matching completed. Found {} matches in {}ms", matches.size(), queryTime);
+            
+            return matches;
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid argument in job matching", e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error in vector search", e);
+            throw new JobMatchingException(Constants.ERROR_JOB_MATCHING, e);
+        }
+    }
+
+    private Post convertDocumentToPost(Document doc) {
+        Post post = new Post();
+        
+        if (doc.getObjectId("_id") != null) {
+            post.setId(doc.getObjectId("_id").toString());
+        }
+        post.setJobTitle(doc.getString("jobTitle"));
+        post.setJobDescription(doc.getString("jobDescription"));
+        post.setExperience(doc.getInteger("experience"));
+        post.setRequiredTechs(doc.getList("requiredTechs", String.class));
+        post.setCompany(doc.getString("company"));
+        post.setLocation(doc.getString("location"));
+        post.setEmploymentType(doc.getString("employmentType"));
+        post.setSalaryMin(doc.getDouble("salaryMin"));
+        post.setSalaryMax(doc.getDouble("salaryMax"));
+        post.setCurrency(doc.getString("currency"));
+        
+        return post;
+    }
+}
