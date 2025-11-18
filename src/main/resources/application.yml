@@ -4,7 +4,8 @@ spring:
   
   data:
     mongodb:
-      database: sample_db
+      uri: ${ATLAS_CONNECTION_STRING:mongodb://localhost:27017}
+      database: ${MONGO_DATABASE_NAME:jobs_db}
       auto-index-creation: true
   
   cache:
@@ -58,16 +59,28 @@ logging:
     max-history: 30
 
 app:
+  mongodb:
+    database-name: ${MONGO_DATABASE_NAME:sample_db}
+    collection-name: ${MONGO_COLLECTION_NAME:JobPost}
+    vector-index-name: ${MONGO_VECTOR_INDEX_NAME:vector_index}
   embeddings:
-    model-id: mixedbread-ai/mxbai-embed-large-v1
-    timeout-seconds: 60
-    dimension: 1024
+    huggingface:
+      access-token: ${HUGGING_FACE_ACCESS_TOKEN:}
+      model-id: ${EMBEDDING_MODEL_ID:mixedbread-ai/mxbai-embed-large-v1}
+      timeout-seconds: ${EMBEDDING_TIMEOUT_SECONDS:60}
+      dimension: ${EMBEDDING_DIMENSION:1024}
   matching:
-    default-limit: 10
-    max-limit: 100
-    min-limit: 1
-    default-min-confidence: 0.0
+    default-limit: ${MATCH_DEFAULT_LIMIT:10}
+    max-limit: ${MATCH_MAX_LIMIT:100}
+    min-limit: ${MATCH_MIN_LIMIT:1}
+    default-min-confidence: ${MATCH_MIN_CONFIDENCE:0.0}
+    thresholds:
+      very-strong: ${MATCH_THRESHOLD_VERY_STRONG:0.8}
+      good: ${MATCH_THRESHOLD_GOOD:0.6}
+      moderate: ${MATCH_THRESHOLD_MODERATE:0.4}
   cache:
-    embedding-ttl-hours: 24
-    query-ttl-minutes: 30
+    embedding-ttl-hours: ${CACHE_EMBEDDING_TTL_HOURS:24}
+    query-ttl-minutes: ${CACHE_QUERY_TTL_MINUTES:30}
+  api:
+    base-path: ${API_BASE_PATH:/api/v1}
 
