@@ -1,23 +1,25 @@
 package com.george.util;
 
+import com.george.config.AppProperties;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Component
 public class MatchReasonGenerator {
     
     private static final Logger logger = LoggerFactory.getLogger(MatchReasonGenerator.class);
     
-    private static final double VERY_STRONG_THRESHOLD = 0.8;
-    private static final double GOOD_THRESHOLD = 0.6;
-    private static final double MODERATE_THRESHOLD = 0.4;
+    @Autowired
+    private AppProperties appProperties;
     
     // Common technology keywords and their variations
     private static final Set<String> TECH_KEYWORDS = Set.of(
@@ -27,19 +29,23 @@ public class MatchReasonGenerator {
         "git", "ci/cd", "microservices", "rest", "graphql", "sql", "nosql"
     );
     
-    public static List<String> generateMatchReasons(Document doc, String userProfile) {
+    public List<String> generateMatchReasons(Document doc, String userProfile) {
         List<String> reasons = new ArrayList<>();
         
         try {
             Double scoreObj = doc.getDouble("score");
             double score = scoreObj != null ? scoreObj : 0.0;
             
+            double veryStrongThreshold = appProperties.getMatching().getThresholds().getVeryStrong();
+            double goodThreshold = appProperties.getMatching().getThresholds().getGood();
+            double moderateThreshold = appProperties.getMatching().getThresholds().getModerate();
+            
             // Score-based reasons
-            if (score >= VERY_STRONG_THRESHOLD) {
+            if (score >= veryStrongThreshold) {
                 reasons.add("Very strong semantic match (confidence: " + String.format("%.2f", score) + ")");
-            } else if (score >= GOOD_THRESHOLD) {
+            } else if (score >= goodThreshold) {
                 reasons.add("Good semantic match (confidence: " + String.format("%.2f", score) + ")");
-            } else if (score >= MODERATE_THRESHOLD) {
+            } else if (score >= moderateThreshold) {
                 reasons.add("Moderate semantic match (confidence: " + String.format("%.2f", score) + ")");
             }
             
