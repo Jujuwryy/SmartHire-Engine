@@ -1,7 +1,8 @@
 package com.george.Vector;
 
+import com.george.config.AppProperties;
 import com.george.exception.EmbeddingException;
-import com.george.util.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
@@ -20,22 +21,27 @@ public class VectorEmbeddings {
 
     private static final Logger logger = LoggerFactory.getLogger(VectorEmbeddings.class);
     private static HuggingFaceEmbeddingModel embeddingModel;
+    
+    @Autowired
+    private AppProperties appProperties;
 
     // Returns an instance of HuggingFaceEmbeddingModel with appropriate configurations
-    private static HuggingFaceEmbeddingModel getEmbeddingModel() {
+    private HuggingFaceEmbeddingModel getEmbeddingModel() {
         if (embeddingModel == null) {
             synchronized (VectorEmbeddings.class) {
                 if (embeddingModel == null) {
-                    String accessToken = System.getenv(Constants.ENV_HUGGING_FACE_TOKEN);
+                    String accessToken = appProperties.getEmbeddings().getHuggingface().getAccessToken();
                     if (accessToken == null || accessToken.isEmpty()) {
-                        throw new EmbeddingException(Constants.ERROR_MISSING_HF_TOKEN);
+                        throw new EmbeddingException("HUGGING_FACE_ACCESS_TOKEN environment variable is not set or is empty");
                     }
-                    logger.info("Initializing HuggingFace embedding model: {}", Constants.EMBEDDING_MODEL_ID);
+                    String modelId = appProperties.getEmbeddings().getHuggingface().getModelId();
+                    int timeout = appProperties.getEmbeddings().getHuggingface().getTimeoutSeconds();
+                    logger.info("Initializing HuggingFace embedding model: {}", modelId);
                     embeddingModel = HuggingFaceEmbeddingModel.builder()
                             .accessToken(accessToken)
-                            .modelId(Constants.EMBEDDING_MODEL_ID)
+                            .modelId(modelId)
                             .waitForModel(true)
-                            .timeout(ofSeconds(Constants.EMBEDDING_TIMEOUT_SECONDS))
+                            .timeout(ofSeconds(timeout))
                             .build();
                     logger.info("HuggingFace embedding model initialized successfully");
                 }

@@ -1,10 +1,10 @@
 package com.george.config;
 
-import com.george.util.Constants;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration;
@@ -17,18 +17,23 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoConfig.class);
 
+    @Value("${app.mongodb.database-name:jobs_db}")
+    private String databaseName;
+
+    @Value("${spring.data.mongodb.uri}")
+    private String connectionString;
+
     @Override
     protected String getDatabaseName() {
-        return Constants.DATABASE_NAME;
+        return databaseName;
     }
 
     @Override
     @Bean
     public MongoClient mongoClient() {
-        String connectionString = System.getenv(Constants.ENV_ATLAS_CONNECTION_STRING);
         if (connectionString == null || connectionString.isEmpty()) {
-            logger.error("MongoDB connection string is not set");
-            throw new IllegalStateException(Constants.ERROR_MISSING_CONNECTION_STRING);
+            logger.error("MongoDB connection string is not set. Please set ATLAS_CONNECTION_STRING environment variable");
+            throw new IllegalStateException("ATLAS_CONNECTION_STRING environment variable is not set or is empty");
         }
         logger.info("Creating MongoDB client connection");
         return MongoClients.create(connectionString);

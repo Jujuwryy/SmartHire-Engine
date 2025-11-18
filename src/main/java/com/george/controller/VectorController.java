@@ -1,11 +1,13 @@
 package com.george.controller;
 
 import com.george.CreateEmbeddings;
+import com.george.config.AppProperties;
 import com.george.dto.JobMatchRequest;
 import com.george.dto.JobMatchResponse;
 import com.george.model.JobMatch;
 import com.george.service.JobMatchingService;
 import com.george.util.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,6 +33,9 @@ public class VectorController {
     
     private final CreateEmbeddings createEmbeddingsService;
     private final JobMatchingService jobMatchingService;
+    
+    @Autowired
+    private AppProperties appProperties;
 
     public VectorController(CreateEmbeddings createEmbeddingsService, JobMatchingService jobMatchingService) {
         this.createEmbeddingsService = createEmbeddingsService;
@@ -127,8 +132,8 @@ public class VectorController {
         logger.info("Received simple job matching request");
         
         JobMatchRequest request = new JobMatchRequest(userProfile);
-        request.setLimit(Constants.DEFAULT_MATCH_LIMIT);
-        request.setMinConfidence(Constants.DEFAULT_MIN_CONFIDENCE);
+        request.setLimit(appProperties.getMatching().getDefaultLimit());
+        request.setMinConfidence(appProperties.getMatching().getDefaultMinConfidence());
         
         return findMatchingJobs(request);
     }

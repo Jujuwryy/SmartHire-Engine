@@ -1,10 +1,12 @@
 package com.george;
 
 import com.george.Vector.VectorEmbeddings;
+import com.george.config.AppProperties;
 import com.george.exception.EmbeddingException;
 import com.george.model.Post;
 import com.george.model.PostRepository;
-import com.george.util.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -141,7 +143,7 @@ public class CreateEmbeddings {
             throw e;
         } catch (Exception e) {
             logger.error("Unexpected error during embedding generation", e);
-            throw new EmbeddingException(Constants.ERROR_EMBEDDING_GENERATION, e);
+            throw new EmbeddingException("Failed to generate embeddings", e);
         }
         
         logger.info("Embedding generation process completed successfully");
