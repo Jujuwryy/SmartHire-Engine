@@ -5,8 +5,6 @@ import com.george.config.AppProperties;
 import com.george.exception.EmbeddingException;
 import com.george.model.Post;
 import com.george.model.PostRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -17,8 +15,9 @@ import org.bson.BsonArray;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,22 +27,30 @@ public class CreateEmbeddings {
 
     private static final Logger logger = LoggerFactory.getLogger(CreateEmbeddings.class);
 
-    @Autowired
-    private VectorEmbeddings embeddingProvider;
-    
-    @Autowired
-    private PostRepository repo;
+    private final VectorEmbeddings embeddingProvider;
+    private final PostRepository postRepository;
+    private final AppProperties appProperties;
+    private final String mongoUri;
+
+    public CreateEmbeddings(VectorEmbeddings embeddingProvider,
+                            PostRepository postRepository,
+                            AppProperties appProperties,
+                            @Value("${spring.data.mongodb.uri}") String mongoUri) {
+        this.embeddingProvider = embeddingProvider;
+        this.postRepository = postRepository;
+        this.appProperties = appProperties;
+        this.mongoUri = mongoUri;
+    }
 
     public void createEmbeddings() {
-        String uri = System.getenv(Constants.ENV_ATLAS_CONNECTION_STRING);
-        if (uri == null || uri.isEmpty()) {
-            throw new EmbeddingException(Constants.ERROR_MISSING_CONNECTION_STRING);
+        if (!StringUtils.hasText(mongoUri)) {
+            throw new EmbeddingException("ATLAS_CONNECTION_STRING environment variable is not set or is empty");
         }
 
         logger.info("Starting embedding generation process");
         
         // Fetch existing posts from repository
-        List<Post> existingPosts = repo.findAll();
+        List<Post> existingPosts = postRepository.findAll();
         
         if (existingPosts == null || existingPosts.isEmpty()) {
             logger.warn("No posts found in repository to generate embeddings for");
@@ -52,9 +59,11 @@ public class CreateEmbeddings {
         
         logger.info("Found {} posts to process", existingPosts.size());
         
-        try (MongoClient mongoClient = MongoClients.create(uri)) {
-            MongoDatabase database = mongoClient.getDatabase(Constants.DATABASE_NAME);
-            MongoCollection<Document> collection = database.getCollection(Constants.COLLECTION_NAME);
+        try (MongoClient mongoClient = MongoClients.create(mongoUri)) {
+            String databaseName = appProperties.getMongodb().getDatabaseName();
+            String collectionName = appProperties.getMongodb().getCollectionName();
+            MongoDatabase database = mongoClient.getDatabase(databaseName);
+            MongoCollection<Document> collection = database.getCollection(collectionName);
 
             // Convert Posts to Documents and extract descriptions
             List<Document> documents = new ArrayList<>();

@@ -2,7 +2,6 @@ package com.george.Vector;
 
 import com.george.config.AppProperties;
 import com.george.exception.EmbeddingException;
-import org.springframework.beans.factory.annotation.Autowired;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
@@ -22,8 +21,11 @@ public class VectorEmbeddings {
     private static final Logger logger = LoggerFactory.getLogger(VectorEmbeddings.class);
     private static HuggingFaceEmbeddingModel embeddingModel;
     
-    @Autowired
-    private AppProperties appProperties;
+    private final AppProperties appProperties;
+
+    public VectorEmbeddings(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
 
     // Returns an instance of HuggingFaceEmbeddingModel with appropriate configurations
     private HuggingFaceEmbeddingModel getEmbeddingModel() {

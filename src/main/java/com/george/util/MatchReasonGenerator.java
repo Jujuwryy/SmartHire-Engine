@@ -4,7 +4,6 @@ import com.george.config.AppProperties;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -18,8 +17,11 @@ public class MatchReasonGenerator {
     
     private static final Logger logger = LoggerFactory.getLogger(MatchReasonGenerator.class);
     
-    @Autowired
-    private AppProperties appProperties;
+    private final AppProperties appProperties;
+    
+    public MatchReasonGenerator(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
     
     // Common technology keywords and their variations
     private static final Set<String> TECH_KEYWORDS = Set.of(

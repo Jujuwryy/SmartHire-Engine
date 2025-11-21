@@ -60,7 +60,7 @@ logging:
 
 app:
   mongodb:
-    database-name: ${MONGO_DATABASE_NAME:sample_db}
+    database-name: ${MONGO_DATABASE_NAME:jobs_db}
     collection-name: ${MONGO_COLLECTION_NAME:JobPost}
     vector-index-name: ${MONGO_VECTOR_INDEX_NAME:vector_index}
   embeddings:

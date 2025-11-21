@@ -8,8 +8,6 @@ import com.george.model.JobMatch;
 import com.george.model.Post;
 import com.george.util.MatchReasonGenerator;
 import com.george.util.TextPreprocessor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -18,7 +16,6 @@ import org.bson.BsonArray;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,20 +26,23 @@ public class JobMatchingService {
 
     private static final Logger logger = LoggerFactory.getLogger(JobMatchingService.class);
 
-    @Autowired
-    private MongoClient mongoClient;
+    private final MongoClient mongoClient;
+    private final VectorEmbeddings vectorEmbeddings;
+    private final EmbeddingCacheService embeddingCacheService;
+    private final AppProperties appProperties;
+    private final MatchReasonGenerator matchReasonGenerator;
 
-    @Autowired
-    private VectorEmbeddings vectorEmbeddings;
-    
-    @Autowired
-    private EmbeddingCacheService embeddingCacheService;
-    
-    @Autowired
-    private AppProperties appProperties;
-    
-    @Autowired
-    private MatchReasonGenerator matchReasonGenerator;
+    public JobMatchingService(MongoClient mongoClient,
+                              VectorEmbeddings vectorEmbeddings,
+                              EmbeddingCacheService embeddingCacheService,
+                              AppProperties appProperties,
+                              MatchReasonGenerator matchReasonGenerator) {
+        this.mongoClient = mongoClient;
+        this.vectorEmbeddings = vectorEmbeddings;
+        this.embeddingCacheService = embeddingCacheService;
+        this.appProperties = appProperties;
+        this.matchReasonGenerator = matchReasonGenerator;
+    }
 
     /**
      * Finds matching jobs based on user profile using vector similarity search

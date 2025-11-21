@@ -6,8 +6,6 @@ import com.george.dto.JobMatchRequest;
 import com.george.dto.JobMatchResponse;
 import com.george.model.JobMatch;
 import com.george.service.JobMatchingService;
-import com.george.util.Constants;
-import org.springframework.beans.factory.annotation.Autowired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(Constants.VECTORS_ENDPOINT)
+@RequestMapping("${app.api.base-path:/api/v1}/vectors")
 @Tag(name = "Vector Embeddings", description = "API for managing vector embeddings and job matching")
 public class VectorController {
     
@@ -33,13 +31,14 @@ public class VectorController {
     
     private final CreateEmbeddings createEmbeddingsService;
     private final JobMatchingService jobMatchingService;
-    
-    @Autowired
-    private AppProperties appProperties;
+    private final AppProperties appProperties;
 
-    public VectorController(CreateEmbeddings createEmbeddingsService, JobMatchingService jobMatchingService) {
+    public VectorController(CreateEmbeddings createEmbeddingsService,
+                            JobMatchingService jobMatchingService,
+                            AppProperties appProperties) {
         this.createEmbeddingsService = createEmbeddingsService;
         this.jobMatchingService = jobMatchingService;
+        this.appProperties = appProperties;
     }
 
     @Operation(
