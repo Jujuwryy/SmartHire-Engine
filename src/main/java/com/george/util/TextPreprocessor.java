@@ -15,15 +15,7 @@ public class TextPreprocessor {
     // Pattern to remove special characters (keeping alphanumeric, spaces, and common punctuation)
     private static final Pattern SPECIAL_CHARS_PATTERN = Pattern.compile("[^a-zA-Z0-9\\s.,!?;:()\\-]");
     
-    /**
-     * Preprocesses text before generating embeddings
-     * - Trims whitespace
-     * - Normalizes whitespace
-     * - Removes excessive special characters
-     * 
-     * @param text Raw text input
-     * @return Preprocessed text
-     */
+    // Preprocesses text before generating embeddings
     public static String preprocess(String text) {
         if (text == null || text.trim().isEmpty()) {
             return "";
