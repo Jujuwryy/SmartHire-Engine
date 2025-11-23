@@ -46,18 +46,15 @@ public class CreateEmbeddings {
         if (!StringUtils.hasText(mongoUri)) {
             throw new EmbeddingException("ATLAS_CONNECTION_STRING environment variable is not set or is empty");
         }
-
-        logger.info("Starting embedding generation process");
         
         // Fetch existing posts from repository
         List<Post> existingPosts = postRepository.findAll();
         
         if (existingPosts == null || existingPosts.isEmpty()) {
-            logger.warn("No posts found in repository to generate embeddings for");
             throw new EmbeddingException("No job posts found in repository");
         }
         
-        logger.info("Found {} posts to process", existingPosts.size());
+        logger.info("Processing {} job posts for embedding generation", existingPosts.size());
         
         try (MongoClient mongoClient = MongoClients.create(mongoUri)) {
             String databaseName = appProperties.getMongodb().getDatabaseName();
@@ -113,8 +110,6 @@ public class CreateEmbeddings {
             if (descriptions.isEmpty()) {
                 throw new EmbeddingException("No valid job descriptions found to generate embeddings");
             }
-
-            logger.info("Generating embeddings for {} job descriptions", descriptions.size());
             
             // Generate embeddings
             List<BsonArray> embeddings = embeddingProvider.getEmbeddings(descriptions);
@@ -130,31 +125,19 @@ public class CreateEmbeddings {
                 documents.get(i).append("embedding", embeddings.get(i));
             }
 
-            logger.info("Inserting {} documents with embeddings into MongoDB", documents.size());
-            
             // Insert documents with embeddings
             try {
                 InsertManyResult result = collection.insertMany(documents);
-                List<String> insertedIds = new ArrayList<>();
-                result.getInsertedIds().values()
-                    .forEach(doc -> insertedIds.add(doc.toString()));
-                logger.info("Successfully inserted {} documents with embeddings to collection: {}", 
-                    insertedIds.size(), collection.getNamespace());
-                logger.debug("Inserted document IDs: {}", insertedIds);
+                logger.info("Successfully inserted {} documents with embeddings", result.getInsertedIds().size());
             } catch (MongoException me) {
-                logger.error("Failed to insert documents into MongoDB", me);
                 throw new EmbeddingException("Failed to insert documents into MongoDB", me);
             }
         } catch (MongoException me) {
-            logger.error("Failed to connect to MongoDB", me);
             throw new EmbeddingException("Failed to connect to MongoDB", me);
         } catch (EmbeddingException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Unexpected error during embedding generation", e);
             throw new EmbeddingException("Failed to generate embeddings", e);
         }
-        
-        logger.info("Embedding generation process completed successfully");
     }
 }
