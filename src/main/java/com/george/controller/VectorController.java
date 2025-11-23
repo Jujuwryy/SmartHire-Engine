@@ -13,9 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +23,6 @@ import java.util.UUID;
 @RequestMapping("${app.api.base-path:/api/v1}/vectors")
 @Tag(name = "Vector Embeddings", description = "API for managing vector embeddings and job matching")
 public class VectorController {
-    
-    private static final Logger logger = LoggerFactory.getLogger(VectorController.class);
     
     private final CreateEmbeddings createEmbeddingsService;
     private final JobMatchingService jobMatchingService;
@@ -59,15 +54,8 @@ public class VectorController {
     })
     @GetMapping("/generate")
     public ResponseEntity<String> generateEmbeddings() {
-        logger.info("Received request to generate embeddings");
-        try {
-            createEmbeddingsService.createEmbeddings();
-            logger.info("Embeddings generated successfully");
-            return ResponseEntity.ok("Embeddings generated and saved successfully!");
-        } catch (Exception e) {
-            logger.error("Failed to generate embeddings", e);
-            throw e; // Let GlobalExceptionHandler handle it
-        }
+        createEmbeddingsService.createEmbeddings();
+        return ResponseEntity.ok("Embeddings generated and saved successfully!");
     }
 
     @Operation(
@@ -96,28 +84,16 @@ public class VectorController {
             @Valid @RequestBody JobMatchRequest request) {
         
         String queryId = UUID.randomUUID().toString();
-        logger.info("Received job matching request [queryId: {}] for profile: {}", 
-            queryId, request.getUserProfile().substring(0, Math.min(50, request.getUserProfile().length())));
-        
         long startTime = System.currentTimeMillis();
-        
-        try {
-            List<JobMatch> matches = jobMatchingService.findMatchingJobs(request);
-            
-            long queryTime = System.currentTimeMillis() - startTime;
-            
-            JobMatchResponse response = new JobMatchResponse(matches);
-            response.setQueryTimeMs(queryTime);
-            response.setQueryId(queryId);
-            
-            logger.info("Job matching completed [queryId: {}] - Found {} matches in {}ms", 
-                queryId, matches.size(), queryTime);
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Error in job matching [queryId: {}]", queryId, e);
-            throw e; // Let GlobalExceptionHandler handle it
-        }
+
+        List<JobMatch> matches = jobMatchingService.findMatchingJobs(request);
+        long queryTime = System.currentTimeMillis() - startTime;
+
+        JobMatchResponse response = new JobMatchResponse(matches);
+        response.setQueryTimeMs(queryTime);
+        response.setQueryId(queryId);
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
@@ -127,8 +103,6 @@ public class VectorController {
     @PostMapping("/jobs/match/simple")
     public ResponseEntity<JobMatchResponse> findMatchingJobsSimple(
             @RequestBody String userProfile) {
-        
-        logger.info("Received simple job matching request");
         
         JobMatchRequest request = new JobMatchRequest(userProfile);
         request.setLimit(appProperties.getMatching().getDefaultLimit());
