@@ -84,7 +84,7 @@ public class MatchReasonGenerator {
             }
             
         } catch (Exception e) {
-            logger.warn("Error generating match reasons", e);
+            logger.warn("Error generating match reasons: {}", e.getMessage());
             reasons.add("Match found");
         }
         
