@@ -20,7 +20,6 @@ public class EmbeddingCacheService {
 
     @Cacheable(value = "embeddings", key = "#text.hashCode()")
     public BsonArray getCachedEmbedding(String text) {
-        logger.debug("Cache miss for embedding, generating new embedding");
         return vectorEmbeddings.getEmbedding(text);
     }
 }

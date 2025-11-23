@@ -80,35 +80,29 @@ public class JobMatchingService {
      */
     @Timed(value = "job.matching.duration", description = "Time taken to find matching jobs")
     public List<JobMatch> findMatchingJobs(String userProfile, Integer limit, Double minConfidence) {
-        long startTime = System.currentTimeMillis();
+        // Validate and preprocess inputs
+        if (userProfile == null || userProfile.trim().isEmpty()) {
+            throw new IllegalArgumentException("User profile cannot be null or empty");
+        }
         
+        // Preprocess user profile text
+        String processedProfile = TextPreprocessor.preprocess(userProfile);
+        processedProfile = TextPreprocessor.validateAndTruncate(processedProfile, 2000);
+        
+        // Normalize limit
+        int maxLimit = appProperties.getMatching().getMaxLimit();
+        int defaultLimit = appProperties.getMatching().getDefaultLimit();
+        double defaultMinConf = appProperties.getMatching().getDefaultMinConfidence();
+        
+        int normalizedLimit = limit != null && limit > 0 && limit <= maxLimit 
+            ? limit : defaultLimit;
+        double normalizedMinConfidence = minConfidence != null && minConfidence >= 0.0 && minConfidence <= 1.0
+            ? minConfidence : defaultMinConf;
+
+        // Generate embedding for user profile (with caching)
+        BsonArray userEmbedding = embeddingCacheService.getCachedEmbedding(processedProfile);
+
         try {
-            logger.info("Starting job matching for profile: {} (limit: {}, minConfidence: {})", 
-                userProfile.substring(0, Math.min(50, userProfile.length())), limit, minConfidence);
-            
-            // Validate and preprocess inputs
-            if (userProfile == null || userProfile.trim().isEmpty()) {
-                throw new IllegalArgumentException("User profile cannot be null or empty");
-            }
-            
-            // Preprocess user profile text
-            String processedProfile = TextPreprocessor.preprocess(userProfile);
-            processedProfile = TextPreprocessor.validateAndTruncate(processedProfile, 2000);
-            
-            // Normalize limit
-            int maxLimit = appProperties.getMatching().getMaxLimit();
-            int defaultLimit = appProperties.getMatching().getDefaultLimit();
-            double defaultMinConf = appProperties.getMatching().getDefaultMinConfidence();
-            
-            int normalizedLimit = limit != null && limit > 0 && limit <= maxLimit 
-                ? limit : defaultLimit;
-            double normalizedMinConfidence = minConfidence != null && minConfidence >= 0.0 && minConfidence <= 1.0
-                ? minConfidence : defaultMinConf;
-
-            // Generate embedding for user profile (with caching)
-            logger.debug("Generating embedding for user profile");
-            BsonArray userEmbedding = embeddingCacheService.getCachedEmbedding(processedProfile);
-
             String databaseName = appProperties.getMongodb().getDatabaseName();
             String collectionName = appProperties.getMongodb().getCollectionName();
             String vectorIndexName = appProperties.getMongodb().getVectorIndexName();
@@ -167,19 +161,15 @@ public class JobMatchingService {
                         match.setMatchReasons(matchReasonGenerator.generateMatchReasons(doc, finalProcessedProfile));
                         matches.add(match);
                     } catch (Exception e) {
-                        logger.warn("Error processing document in search results", e);
+                        // Log and continue processing other documents
+                        logger.warn("Error processing document in search results: {}", e.getMessage());
                     }
                 });
 
-            long queryTime = System.currentTimeMillis() - startTime;
-            logger.info("Job matching completed. Found {} matches in {}ms", matches.size(), queryTime);
-            
             return matches;
         } catch (IllegalArgumentException e) {
-            logger.error("Invalid argument in job matching", e);
             throw e;
         } catch (Exception e) {
-            logger.error("Error in vector search", e);
             throw new JobMatchingException("Failed to perform job matching", e);
         }
     }
