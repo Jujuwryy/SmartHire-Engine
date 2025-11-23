@@ -65,9 +65,6 @@ public class VectorEmbeddings {
             throw new IllegalArgumentException("Text list cannot be null or empty");
         }
         
-        logger.debug("Generating embeddings for {} texts", texts.size());
-        long startTime = System.currentTimeMillis();
-        
         try {
             List<TextSegment> textSegments = texts.stream()
                     .map(TextSegment::from)
@@ -79,7 +76,7 @@ public class VectorEmbeddings {
                 throw new EmbeddingException("Received null response from embedding model");
             }
             
-            List<BsonArray> embeddings = response.content().stream()
+            return response.content().stream()
                     .map(e -> {
                         if (e == null || e.vectorAsList() == null) {
                             throw new EmbeddingException("Received null embedding vector");
@@ -90,15 +87,9 @@ public class VectorEmbeddings {
                                         .toList());
                     })
                     .toList();
-            
-            long duration = System.currentTimeMillis() - startTime;
-            logger.info("Generated {} embeddings in {}ms", embeddings.size(), duration);
-            
-            return embeddings;
         } catch (EmbeddingException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Error generating embeddings", e);
             throw new EmbeddingException("Failed to generate embeddings", e);
         }
     }
@@ -116,9 +107,6 @@ public class VectorEmbeddings {
             throw new IllegalArgumentException("Text cannot be null or empty");
         }
         
-        logger.debug("Generating embedding for text (length: {})", text.length());
-        long startTime = System.currentTimeMillis();
-        
         try {
             Response<Embedding> response = getEmbeddingModel().embed(text);
             
@@ -126,19 +114,13 @@ public class VectorEmbeddings {
                 throw new EmbeddingException("Received null response from embedding model");
             }
             
-            BsonArray embedding = new BsonArray(
+            return new BsonArray(
                     response.content().vectorAsList().stream()
                             .map(BsonDouble::new)
                             .toList());
-            
-            long duration = System.currentTimeMillis() - startTime;
-            logger.debug("Generated embedding in {}ms (dimension: {})", duration, embedding.size());
-            
-            return embedding;
         } catch (EmbeddingException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Error generating embedding", e);
             throw new EmbeddingException("Failed to generate embedding", e);
         }
     }
