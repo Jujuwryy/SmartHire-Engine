@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("${app.api.base-path:/api/v1}/vectors")
@@ -84,13 +85,9 @@ public class VectorController {
             @Valid @RequestBody JobMatchRequest request) {
         
         String queryId = UUID.randomUUID().toString();
-        long startTime = System.currentTimeMillis();
-
         List<JobMatch> matches = jobMatchingService.findMatchingJobs(request);
-        long queryTime = System.currentTimeMillis() - startTime;
 
         JobMatchResponse response = new JobMatchResponse(matches);
-        response.setQueryTimeMs(queryTime);
         response.setQueryId(queryId);
 
         return ResponseEntity.ok(response);
