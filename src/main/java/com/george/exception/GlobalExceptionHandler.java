@@ -25,7 +25,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmbeddingException.class)
     public ResponseEntity<ErrorResponse> handleEmbeddingException(
             EmbeddingException ex, WebRequest request) {
-        logger.error("Embedding exception occurred", ex);
+        // Logging handled by ErrorHandlingAspect, but log here for REST context
+        logger.debug("Handling EmbeddingException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "Embedding Generation Failed",
@@ -38,7 +39,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(JobMatchingException.class)
     public ResponseEntity<ErrorResponse> handleJobMatchingException(
             JobMatchingException ex, WebRequest request) {
-        logger.error("Job matching exception occurred", ex);
+        logger.debug("Handling JobMatchingException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "Job Matching Failed",
@@ -51,7 +52,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
-        logger.warn("Validation exception occurred", ex);
+        logger.debug("Handling validation exception for REST response");
         List<String> errors = ex.getBindingResult()
             .getFieldErrors()
             .stream()
@@ -71,7 +72,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(
             ConstraintViolationException ex, WebRequest request) {
-        logger.warn("Constraint violation exception occurred", ex);
+        logger.debug("Handling constraint violation exception for REST response");
         List<String> errors = ex.getConstraintViolations()
             .stream()
             .map(ConstraintViolation::getMessage)
@@ -90,7 +91,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
-        logger.warn("Illegal argument exception occurred", ex);
+        logger.debug("Handling illegal argument exception for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),
             "Invalid Argument",
@@ -103,7 +104,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, WebRequest request) {
-        logger.error("Unexpected exception occurred", ex);
+        logger.error("Unhandled exception in REST layer", ex);
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "Internal Server Error",
