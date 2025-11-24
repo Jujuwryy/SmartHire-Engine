@@ -1,5 +1,8 @@
 package com.george.model;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
@@ -9,9 +12,16 @@ public class Post {
     
     @Id
     private String id;
+    
+    @NotBlank(message = "Job title is required")
     private String jobTitle;
+    
+    @NotBlank(message = "Job description is required")
     private String jobDescription;
+    
+    @PositiveOrZero(message = "Experience must be non-negative")
     private Integer experience;
+    
     private List<String> requiredTechs;
     private String company;
     private String location;
