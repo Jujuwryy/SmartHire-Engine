@@ -12,9 +12,6 @@ public class TextPreprocessor {
     // Pattern to remove excessive whitespace
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
     
-    // Pattern to remove special characters (keeping alphanumeric, spaces, and common punctuation)
-    private static final Pattern SPECIAL_CHARS_PATTERN = Pattern.compile("[^a-zA-Z0-9\\s.,!?;:()\\-]");
-    
     // Preprocesses text before generating embeddings
     public static String preprocess(String text) {
         if (text == null || text.trim().isEmpty()) {
