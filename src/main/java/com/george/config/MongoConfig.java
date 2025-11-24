@@ -17,11 +17,14 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoConfig.class);
 
-    @Value("${app.mongodb.database-name:jobs_db}")
-    private String databaseName;
+    private final String databaseName;
+    private final String connectionString;
 
-    @Value("${spring.data.mongodb.uri}")
-    private String connectionString;
+    public MongoConfig(@Value("${app.mongodb.database-name:jobs_db}") String databaseName,
+                       @Value("${spring.data.mongodb.uri}") String connectionString) {
+        this.databaseName = databaseName;
+        this.connectionString = connectionString;
+    }
 
     @Override
     protected String getDatabaseName() {
