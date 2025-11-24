@@ -161,8 +161,7 @@ public class JobMatchingService {
                         match.setMatchReasons(matchReasonGenerator.generateMatchReasons(doc, finalProcessedProfile));
                         matches.add(match);
                     } catch (Exception e) {
-                        // Log and continue processing other documents
-                        logger.warn("Error processing document in search results: {}", e.getMessage());
+                        // Continue processing other documents - error already logged by AOP
                     }
                 });
 
