@@ -7,7 +7,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -33,7 +32,7 @@ public class LoggingAspect {
         String requestId = UUID.randomUUID().toString();
         
         // Log method entry with sanitized arguments
-        logger.info("[{}] Entering {}.{}() with args: {}", 
+        logger.debug("[{}] Entering {}.{}() with args: {}", 
             requestId, className, methodName, sanitizeArguments(args));
         
         long startTime = System.currentTimeMillis();
@@ -43,12 +42,24 @@ public class LoggingAspect {
             long executionTime = System.currentTimeMillis() - startTime;
             
             // Log method exit with execution time
-            if (result != null && result.toString().length() > 200) {
-                logger.info("[{}] Exiting {}.{}() - execution time: {}ms - result: [truncated]", 
-                    requestId, className, methodName, executionTime);
+            if (result != null) {
+                String resultStr = result.toString();
+                if (resultStr.length() > 200) {
+                    logger.debug("[{}] Exiting {}.{}() - execution time: {}ms - result: [truncated]", 
+                        requestId, className, methodName, executionTime);
+                } else {
+                    logger.debug("[{}] Exiting {}.{}() - execution time: {}ms - result: {}", 
+                        requestId, className, methodName, executionTime, result);
+                }
             } else {
-                logger.info("[{}] Exiting {}.{}() - execution time: {}ms - result: {}", 
-                    requestId, className, methodName, executionTime, result);
+                logger.debug("[{}] Exiting {}.{}() - execution time: {}ms - result: null", 
+                    requestId, className, methodName, executionTime);
+            }
+            
+            // Log slow operations at INFO level
+            if (executionTime > 1000) {
+                logger.info("[{}] Slow operation detected: {}.{}() took {}ms", 
+                    requestId, className, methodName, executionTime);
             }
             
             return result;
