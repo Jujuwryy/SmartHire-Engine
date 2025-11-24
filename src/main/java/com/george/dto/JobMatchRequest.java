@@ -1,5 +1,7 @@
 package com.george.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
@@ -10,10 +12,18 @@ public class JobMatchRequest {
     @Size(min = 10, max = 2000, message = "User profile must be between 10 and 2000 characters")
     private String userProfile;
     
+    @Min(value = 1, message = "Limit must be at least 1")
+    @Max(value = 100, message = "Limit cannot exceed 100")
     private Integer limit = 10;
+    
+    @Min(value = 0, message = "Minimum confidence must be between 0 and 1")
+    @Max(value = 1, message = "Minimum confidence must be between 0 and 1")
     private Double minConfidence = 0.0;
+    
     private List<String> preferredTechs;
     private String location;
+    
+    @Min(value = 0, message = "Maximum experience must be non-negative")
     private Integer maxExperience;
     
     public JobMatchRequest() {}
@@ -36,7 +46,7 @@ public class JobMatchRequest {
     }
     
     public void setLimit(Integer limit) {
-        this.limit = limit != null && limit > 0 && limit <= 100 ? limit : 10;
+        this.limit = limit != null ? limit : 10;
     }
     
     public Double getMinConfidence() {
@@ -44,8 +54,7 @@ public class JobMatchRequest {
     }
     
     public void setMinConfidence(Double minConfidence) {
-        this.minConfidence = minConfidence != null && minConfidence >= 0.0 && minConfidence <= 1.0 
-            ? minConfidence : 0.0;
+        this.minConfidence = minConfidence != null ? minConfidence : 0.0;
     }
     
     public List<String> getPreferredTechs() {
