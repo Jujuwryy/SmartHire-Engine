@@ -7,7 +7,6 @@ import com.george.model.Post;
 import com.george.model.PostRepository;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertManyResult;
@@ -15,9 +14,7 @@ import org.bson.BsonArray;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,39 +27,33 @@ public class CreateEmbeddings {
     private final VectorEmbeddings embeddingProvider;
     private final PostRepository postRepository;
     private final AppProperties appProperties;
-    private final String mongoUri;
+    private final MongoClient mongoClient;
 
     public CreateEmbeddings(VectorEmbeddings embeddingProvider,
                             PostRepository postRepository,
                             AppProperties appProperties,
-                            @Value("${spring.data.mongodb.uri}") String mongoUri) {
+                            MongoClient mongoClient) {
         this.embeddingProvider = embeddingProvider;
         this.postRepository = postRepository;
         this.appProperties = appProperties;
-        this.mongoUri = mongoUri;
+        this.mongoClient = mongoClient;
     }
 
     public void createEmbeddings() {
-        if (!StringUtils.hasText(mongoUri)) {
-            throw new EmbeddingException("ATLAS_CONNECTION_STRING environment variable is not set or is empty");
-        }
-        
-        // Fetch existing posts from repository
         List<Post> existingPosts = postRepository.findAll();
         
-        if (existingPosts == null || existingPosts.isEmpty()) {
+        if (existingPosts.isEmpty()) {
             throw new EmbeddingException("No job posts found in repository");
         }
         
         logger.info("Processing {} job posts for embedding generation", existingPosts.size());
         
-        try (MongoClient mongoClient = MongoClients.create(mongoUri)) {
+        try {
             String databaseName = appProperties.getMongodb().getDatabaseName();
             String collectionName = appProperties.getMongodb().getCollectionName();
             MongoDatabase database = mongoClient.getDatabase(databaseName);
             MongoCollection<Document> collection = database.getCollection(collectionName);
 
-            // Convert Posts to Documents and extract descriptions
             List<Document> documents = new ArrayList<>();
             List<String> descriptions = new ArrayList<>();
             
@@ -72,8 +63,7 @@ public class CreateEmbeddings {
                     continue;
                 }
                 
-                // Convert requiredTechs to ArrayList to ensure proper MongoDB serialization
-                ArrayList<String> techsList = post.getRequiredTechs() != null 
+                List<String> techsList = post.getRequiredTechs() != null 
                     ? new ArrayList<>(post.getRequiredTechs()) 
                     : new ArrayList<>();
                 
@@ -83,7 +73,6 @@ public class CreateEmbeddings {
                     .append("experience", post.getExperience())
                     .append("requiredTechs", techsList);
                 
-                // Add optional fields if present
                 if (post.getCompany() != null) {
                     doc.append("company", post.getCompany());
                 }
@@ -111,7 +100,6 @@ public class CreateEmbeddings {
                 throw new EmbeddingException("No valid job descriptions found to generate embeddings");
             }
             
-            // Generate embeddings
             List<BsonArray> embeddings = embeddingProvider.getEmbeddings(descriptions);
 
             if (embeddings.size() != documents.size()) {
@@ -120,20 +108,14 @@ public class CreateEmbeddings {
                         embeddings.size(), documents.size()));
             }
 
-            // Add embeddings to documents
             for (int i = 0; i < documents.size(); i++) {
                 documents.get(i).append("embedding", embeddings.get(i));
             }
 
-            // Insert documents with embeddings
-            try {
-                InsertManyResult result = collection.insertMany(documents);
-                logger.info("Successfully inserted {} documents with embeddings", result.getInsertedIds().size());
-            } catch (MongoException me) {
-                throw new EmbeddingException("Failed to insert documents into MongoDB", me);
-            }
+            InsertManyResult result = collection.insertMany(documents);
+            logger.info("Successfully inserted {} documents with embeddings", result.getInsertedIds().size());
         } catch (MongoException me) {
-            throw new EmbeddingException("Failed to connect to MongoDB", me);
+            throw new EmbeddingException("Failed to perform MongoDB operation", me);
         } catch (EmbeddingException e) {
             throw e;
         } catch (Exception e) {
