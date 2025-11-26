@@ -5,7 +5,7 @@ import com.george.config.AppProperties;
 import com.george.dto.JobMatchRequest;
 import com.george.exception.JobMatchingException;
 import com.george.model.JobMatch;
-import com.george.model.Post;
+import com.george.util.DocumentMapper;
 import com.george.util.MatchReasonGenerator;
 import com.george.util.TextPreprocessor;
 import com.mongodb.client.MongoClient;
@@ -31,37 +31,28 @@ public class JobMatchingService {
     private final EmbeddingCacheService embeddingCacheService;
     private final AppProperties appProperties;
     private final MatchReasonGenerator matchReasonGenerator;
+    private final DocumentMapper documentMapper;
 
     public JobMatchingService(MongoClient mongoClient,
                               VectorEmbeddings vectorEmbeddings,
                               EmbeddingCacheService embeddingCacheService,
                               AppProperties appProperties,
-                              MatchReasonGenerator matchReasonGenerator) {
+                              MatchReasonGenerator matchReasonGenerator,
+                              DocumentMapper documentMapper) {
         this.mongoClient = mongoClient;
         this.vectorEmbeddings = vectorEmbeddings;
         this.embeddingCacheService = embeddingCacheService;
         this.appProperties = appProperties;
         this.matchReasonGenerator = matchReasonGenerator;
+        this.documentMapper = documentMapper;
     }
 
-    /**
-     * Finds matching jobs based on user profile using vector similarity search
-     * 
-     * @param userProfile Text description of user's skills and preferences
-     * @return List of matching jobs with similarity scores
-     */
     public List<JobMatch> findMatchingJobs(String userProfile) {
         return findMatchingJobs(userProfile, 
             appProperties.getMatching().getDefaultLimit(), 
             appProperties.getMatching().getDefaultMinConfidence());
     }
 
-    /**
-     * Finds matching jobs with advanced filtering options
-     * 
-     * @param request JobMatchRequest containing user profile and filtering options
-     * @return List of matching jobs with similarity scores
-     */
     public List<JobMatch> findMatchingJobs(JobMatchRequest request) {
         return findMatchingJobs(
             request.getUserProfile(),
@@ -70,26 +61,15 @@ public class JobMatchingService {
         );
     }
 
-    /**
-     * Finds matching jobs based on user profile using vector similarity search
-     * 
-     * @param userProfile Text description of user's skills and preferences
-     * @param limit Maximum number of results to return
-     * @param minConfidence Minimum confidence score threshold
-     * @return List of matching jobs with similarity scores
-     */
     @Timed(value = "job.matching.duration", description = "Time taken to find matching jobs")
     public List<JobMatch> findMatchingJobs(String userProfile, Integer limit, Double minConfidence) {
-        // Validate and preprocess inputs
         if (userProfile == null || userProfile.trim().isEmpty()) {
             throw new IllegalArgumentException("User profile cannot be null or empty");
         }
         
-        // Preprocess user profile text
         String processedProfile = TextPreprocessor.preprocess(userProfile);
         processedProfile = TextPreprocessor.validateAndTruncate(processedProfile, 2000);
         
-        // Normalize limit
         int maxLimit = appProperties.getMatching().getMaxLimit();
         int defaultLimit = appProperties.getMatching().getDefaultLimit();
         double defaultMinConf = appProperties.getMatching().getDefaultMinConfidence();
@@ -99,7 +79,6 @@ public class JobMatchingService {
         double normalizedMinConfidence = minConfidence != null && minConfidence >= 0.0 && minConfidence <= 1.0
             ? minConfidence : defaultMinConf;
 
-        // Generate embedding for user profile (with caching)
         BsonArray userEmbedding = embeddingCacheService.getCachedEmbedding(processedProfile);
 
         try {
@@ -110,20 +89,17 @@ public class JobMatchingService {
             MongoDatabase database = mongoClient.getDatabase(databaseName);
             MongoCollection<Document> collection = database.getCollection(collectionName);
 
-            // Create aggregation pipeline for vector search
             List<Document> pipeline = new ArrayList<>();
             
-            // Vector search stage
             Document searchStage = new Document("$search", new Document()
                 .append("index", vectorIndexName)
                 .append("knnBeta", new Document()
                     .append("vector", userEmbedding)
                     .append("path", "embedding")
-                    .append("k", normalizedLimit * 2))); // Get more results for filtering
+                    .append("k", normalizedLimit * 2)));
             
             pipeline.add(searchStage);
             
-            // Project stage
             Document projectStage = new Document("$project", new Document()
                 .append("jobTitle", 1)
                 .append("jobDescription", 1)
@@ -139,29 +115,26 @@ public class JobMatchingService {
             
             pipeline.add(projectStage);
             
-            // Match stage for confidence filtering
             if (normalizedMinConfidence > 0.0) {
                 pipeline.add(new Document("$match", 
                     new Document("score", new Document("$gte", normalizedMinConfidence))));
             }
             
-            // Limit stage
             pipeline.add(new Document("$limit", normalizedLimit));
 
-            // Execute search and convert results
             List<JobMatch> matches = new ArrayList<>();
-            final String finalProcessedProfile = processedProfile; // Make effectively final for lambda
+            final String finalProcessedProfile = processedProfile;
             collection.aggregate(pipeline)
                 .forEach(doc -> {
                     try {
                         JobMatch match = new JobMatch();
-                        match.setJob(convertDocumentToPost(doc));
+                        match.setJob(documentMapper.toPost(doc));
                         Double score = doc.getDouble("score");
                         match.setConfidence(score != null ? score : 0.0);
                         match.setMatchReasons(matchReasonGenerator.generateMatchReasons(doc, finalProcessedProfile));
                         matches.add(match);
                     } catch (Exception e) {
-                        // Continue processing other documents - error already logged by AOP
+                        logger.warn("Failed to process document in job matching: {}", e.getMessage());
                     }
                 });
 
@@ -171,25 +144,5 @@ public class JobMatchingService {
         } catch (Exception e) {
             throw new JobMatchingException("Failed to perform job matching", e);
         }
-    }
-
-    private Post convertDocumentToPost(Document doc) {
-        Post post = new Post();
-        
-        if (doc.getObjectId("_id") != null) {
-            post.setId(doc.getObjectId("_id").toString());
-        }
-        post.setJobTitle(doc.getString("jobTitle"));
-        post.setJobDescription(doc.getString("jobDescription"));
-        post.setExperience(doc.getInteger("experience"));
-        post.setRequiredTechs(doc.getList("requiredTechs", String.class));
-        post.setCompany(doc.getString("company"));
-        post.setLocation(doc.getString("location"));
-        post.setEmploymentType(doc.getString("employmentType"));
-        post.setSalaryMin(doc.getDouble("salaryMin"));
-        post.setSalaryMax(doc.getDouble("salaryMax"));
-        post.setCurrency(doc.getString("currency"));
-        
-        return post;
     }
 }
