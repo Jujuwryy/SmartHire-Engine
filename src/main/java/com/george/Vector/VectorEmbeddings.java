@@ -27,7 +27,6 @@ public class VectorEmbeddings {
         this.appProperties = appProperties;
     }
 
-    // Returns an instance of HuggingFaceEmbeddingModel with appropriate configurations
     private HuggingFaceEmbeddingModel getEmbeddingModel() {
         if (embeddingModel == null) {
             synchronized (VectorEmbeddings.class) {
@@ -52,14 +51,6 @@ public class VectorEmbeddings {
         return embeddingModel;
     }
 
-    /**
-     * Takes an array of strings and returns a BSON array of embeddings to
-     * store in the database.
-     *
-     * @param texts List of strings to generate embeddings for.
-     * @return List of BSON arrays representing embeddings.
-     * @throws EmbeddingException if embedding generation fails
-     */
     public List<BsonArray> getEmbeddings(List<String> texts) {
         if (texts == null || texts.isEmpty()) {
             throw new IllegalArgumentException("Text list cannot be null or empty");
@@ -87,21 +78,13 @@ public class VectorEmbeddings {
                                         .toList());
                     })
                     .toList();
-        } catch (EmbeddingException e) {
+        } catch (EmbeddingException | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
             throw new EmbeddingException("Failed to generate embeddings", e);
         }
     }
 
-    /**
-     * Takes a single string and returns a BSON array embedding to
-     * use in a vector query.
-     *
-     * @param text The string to generate embedding for.
-     * @return BSON array representing the embedding.
-     * @throws EmbeddingException if embedding generation fails
-     */
     public BsonArray getEmbedding(String text) {
         if (text == null || text.trim().isEmpty()) {
             throw new IllegalArgumentException("Text cannot be null or empty");
@@ -118,7 +101,7 @@ public class VectorEmbeddings {
                     response.content().vectorAsList().stream()
                             .map(BsonDouble::new)
                             .toList());
-        } catch (EmbeddingException e) {
+        } catch (EmbeddingException | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
             throw new EmbeddingException("Failed to generate embedding", e);
