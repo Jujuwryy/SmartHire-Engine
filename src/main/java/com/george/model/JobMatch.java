@@ -10,15 +10,12 @@ public class JobMatch {
     
     public JobMatch() {}
     
-    
     public JobMatch(Post job, double confidence, List<String> matchReasons) {
-		super();
-		this.job = job;
-		this.confidence = confidence;
-		this.matchReasons = matchReasons;
-	}
+        this.job = job;
+        this.confidence = confidence;
+        this.matchReasons = matchReasons;
+    }
 
-	// Getters and setters
     public Post getJob() {
         return job;
     }

@@ -32,7 +32,6 @@ public class JobMatchRequest {
         this.userProfile = userProfile;
     }
     
-    // Getters and setters
     public String getUserProfile() {
         return userProfile;
     }

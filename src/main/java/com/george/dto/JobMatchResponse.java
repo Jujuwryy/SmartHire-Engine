@@ -6,7 +6,6 @@ import java.util.List;
 public class JobMatchResponse {
     private List<JobMatch> matches;
     private Integer totalMatches;
-    private Long queryTimeMs;
     private String queryId;
     
     public JobMatchResponse() {}
@@ -16,7 +15,6 @@ public class JobMatchResponse {
         this.totalMatches = matches != null ? matches.size() : 0;
     }
     
-    // Getters and setters
     public List<JobMatch> getMatches() {
         return matches;
     }
@@ -32,14 +30,6 @@ public class JobMatchResponse {
     
     public void setTotalMatches(Integer totalMatches) {
         this.totalMatches = totalMatches;
-    }
-    
-    public Long getQueryTimeMs() {
-        return queryTimeMs;
-    }
-    
-    public void setQueryTimeMs(Long queryTimeMs) {
-        this.queryTimeMs = queryTimeMs;
     }
     
     public String getQueryId() {

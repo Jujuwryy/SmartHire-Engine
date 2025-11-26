@@ -39,7 +39,6 @@ public class Post {
         this.requiredTechs = requiredTechs;
     }
     
-    // Getters and setters
     public String getId() {
         return id;
     }
