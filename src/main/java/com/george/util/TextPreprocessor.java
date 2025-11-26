@@ -9,23 +9,16 @@ public class TextPreprocessor {
     
     private static final Logger logger = LoggerFactory.getLogger(TextPreprocessor.class);
     
-    // Pattern to remove excessive whitespace
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
     
-    // Preprocesses text before generating embeddings
     public static String preprocess(String text) {
         if (text == null || text.trim().isEmpty()) {
             return "";
         }
         
         try {
-            // Trim and normalize whitespace
             String processed = text.trim();
             processed = WHITESPACE_PATTERN.matcher(processed).replaceAll(" ");
-            
-            // Remove excessive special characters (optional - can be configured)
-            // processed = SPECIAL_CHARS_PATTERN.matcher(processed).replaceAll("");
-            
             return processed;
         } catch (Exception e) {
             logger.warn("Error preprocessing text, returning original", e);
@@ -33,13 +26,6 @@ public class TextPreprocessor {
         }
     }
     
-    /**
-     * Validates text length for embedding generation
-     * 
-     * @param text Text to validate
-     * @param maxLength Maximum allowed length
-     * @return Truncated text if necessary
-     */
     public static String validateAndTruncate(String text, int maxLength) {
         if (text == null) {
             return "";

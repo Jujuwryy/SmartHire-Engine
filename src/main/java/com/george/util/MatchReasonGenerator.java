@@ -23,7 +23,6 @@ public class MatchReasonGenerator {
         this.appProperties = appProperties;
     }
     
-    // Common technology keywords and their variations
     private static final Set<String> TECH_KEYWORDS = Set.of(
         "java", "python", "javascript", "typescript", "react", "angular", "vue",
         "node", "spring", "django", "flask", "express", "mongodb", "postgresql",
@@ -42,7 +41,6 @@ public class MatchReasonGenerator {
             double goodThreshold = appProperties.getMatching().getThresholds().getGood();
             double moderateThreshold = appProperties.getMatching().getThresholds().getModerate();
             
-            // Score-based reasons
             if (score >= veryStrongThreshold) {
                 reasons.add("Very strong semantic match (confidence: " + String.format("%.2f", score) + ")");
             } else if (score >= goodThreshold) {
@@ -51,7 +49,6 @@ public class MatchReasonGenerator {
                 reasons.add("Moderate semantic match (confidence: " + String.format("%.2f", score) + ")");
             }
             
-            // Technology matching
             List<String> techs = doc.getList("requiredTechs", String.class);
             if (techs != null && !techs.isEmpty()) {
                 String userProfileLower = userProfile.toLowerCase();
@@ -69,7 +66,6 @@ public class MatchReasonGenerator {
                 }
             }
             
-            // Experience level matching
             Integer requiredExp = doc.getInteger("experience");
             if (requiredExp != null) {
                 if (extractExperienceFromProfile(userProfile) >= requiredExp) {
@@ -77,7 +73,6 @@ public class MatchReasonGenerator {
                 }
             }
             
-            // Job title relevance
             String jobTitle = doc.getString("jobTitle");
             if (jobTitle != null && isTitleRelevant(jobTitle, userProfile)) {
                 reasons.add("Job title aligns with profile");
@@ -92,7 +87,6 @@ public class MatchReasonGenerator {
     }
     
     private static int extractExperienceFromProfile(String profile) {
-        // Simple regex to extract years of experience
         Pattern pattern = Pattern.compile("(\\d+)\\s*(?:years?|yrs?|yr)\\s*(?:of\\s*)?experience", 
             Pattern.CASE_INSENSITIVE);
         java.util.regex.Matcher matcher = pattern.matcher(profile);
@@ -110,7 +104,6 @@ public class MatchReasonGenerator {
         String titleLower = jobTitle.toLowerCase();
         String profileLower = userProfile.toLowerCase();
         
-        // Extract key terms from job title
         String[] titleTerms = titleLower.split("[\\s-]+");
         for (String term : titleTerms) {
             if (term.length() > 3 && profileLower.contains(term)) {
