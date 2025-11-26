@@ -24,8 +24,6 @@ public class ErrorHandlingAspect {
         String exceptionType = exception.getClass().getSimpleName();
         String message = exception.getMessage();
         
-        // Log with appropriate level based on exception type
-        // Note: LoggingAspect already logs exceptions, so this provides additional context
         if (exception instanceof IllegalArgumentException || 
             exception instanceof IllegalStateException) {
             logger.warn("Business logic exception: {} - {}", exceptionType, message);

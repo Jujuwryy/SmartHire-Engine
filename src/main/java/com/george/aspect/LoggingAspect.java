@@ -28,10 +28,8 @@ public class LoggingAspect {
         String className = joinPoint.getTarget().getClass().getSimpleName();
         Object[] args = joinPoint.getArgs();
         
-        // Generate request ID for tracking
         String requestId = UUID.randomUUID().toString();
         
-        // Log method entry with sanitized arguments
         logger.debug("[{}] Entering {}.{}() with args: {}", 
             requestId, className, methodName, sanitizeArguments(args));
         
@@ -41,7 +39,6 @@ public class LoggingAspect {
             Object result = joinPoint.proceed();
             long executionTime = System.currentTimeMillis() - startTime;
             
-            // Log method exit with execution time
             if (result != null) {
                 String resultStr = result.toString();
                 if (resultStr.length() > 200) {
@@ -56,7 +53,6 @@ public class LoggingAspect {
                     requestId, className, methodName, executionTime);
             }
             
-            // Log slow operations at INFO level
             if (executionTime > 1000) {
                 logger.info("[{}] Slow operation detected: {}.{}() took {}ms", 
                     requestId, className, methodName, executionTime);
@@ -82,11 +78,9 @@ public class LoggingAspect {
                     return "null";
                 }
                 String argStr = arg.toString();
-                // Truncate long strings (like user profiles)
                 if (argStr.length() > 100) {
                     return argStr.substring(0, 100) + "... [truncated]";
                 }
-                // Mask sensitive data patterns
                 if (argStr.contains("token") || argStr.contains("password") || argStr.contains("secret")) {
                     return "[REDACTED]";
                 }
