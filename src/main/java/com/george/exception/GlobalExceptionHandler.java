@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +24,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmbeddingException.class)
     public ResponseEntity<ErrorResponse> handleEmbeddingException(
             EmbeddingException ex, WebRequest request) {
-        // Logging handled by ErrorHandlingAspect, but log here for REST context
         logger.debug("Handling EmbeddingException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
