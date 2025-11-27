@@ -1,6 +1,6 @@
 package com.george.controller;
 
-import com.george.CreateEmbeddings;
+import com.george.service.CreateEmbeddings;
 import com.george.config.AppProperties;
 import com.george.dto.JobMatchRequest;
 import com.george.dto.JobMatchResponse;

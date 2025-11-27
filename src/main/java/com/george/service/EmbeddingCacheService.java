@@ -1,26 +1,22 @@
 package com.george.service;
 
+import com.george.service.api.EmbeddingProvider;
 import org.bson.BsonArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import com.george.Vector.VectorEmbeddings;
 
 @Service
 public class EmbeddingCacheService {
-
-    private static final Logger logger = LoggerFactory.getLogger(EmbeddingCacheService.class);
     
-    private final VectorEmbeddings vectorEmbeddings;
+    private final EmbeddingProvider embeddingProvider;
 
-    public EmbeddingCacheService(VectorEmbeddings vectorEmbeddings) {
-        this.vectorEmbeddings = vectorEmbeddings;
+    public EmbeddingCacheService(EmbeddingProvider embeddingProvider) {
+        this.embeddingProvider = embeddingProvider;
     }
 
-    @Cacheable(value = "embeddings", key = "#text.hashCode()")
+    @Cacheable(value = "embeddings", key = "#text")
     public BsonArray getCachedEmbedding(String text) {
-        return vectorEmbeddings.getEmbedding(text);
+        return embeddingProvider.getEmbedding(text);
     }
 }
 

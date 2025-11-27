@@ -1,6 +1,7 @@
-package com.george.Vector;
+package com.george.service.embedding;
 
 import com.george.config.AppProperties;
+import com.george.service.api.EmbeddingProvider;
 import com.george.exception.EmbeddingException;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
@@ -16,7 +17,7 @@ import java.util.List;
 import static java.time.Duration.ofSeconds;
 
 @Service
-public class VectorEmbeddings {
+public class VectorEmbeddings implements EmbeddingProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(VectorEmbeddings.class);
     private static HuggingFaceEmbeddingModel embeddingModel;

@@ -100,8 +100,9 @@ The system fetches job postings, generates embeddings using the `mixedbread-ai/m
   - Returns: `JobMatchResponse`
 
 ### Health Check
-- **GET** `/api/v1/health`
-  - Returns application health status
+- **GET** `/actuator/health`
+  - Returns application health status (provided by Spring Boot Actuator)
+  - Includes database connectivity, disk space, and other system health indicators
 
 ### API Documentation
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
@@ -134,6 +135,6 @@ The system fetches job postings, generates embeddings using the `mixedbread-ai/m
 5. **Access the API**:
    - API Base URL: `http://localhost:8080/api/v1`
    - Swagger UI: `http://localhost:8080/swagger-ui.html`
-   - Health Check: `http://localhost:8080/api/v1/health`
+   - Health Check: `http://localhost:8080/actuator/health`
    - Metrics: `http://localhost:8080/actuator/metrics`
 

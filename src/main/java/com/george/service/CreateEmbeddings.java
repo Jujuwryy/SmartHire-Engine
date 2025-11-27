@@ -1,10 +1,11 @@
-package com.george;
+package com.george.service;
 
-import com.george.Vector.VectorEmbeddings;
 import com.george.config.AppProperties;
 import com.george.exception.EmbeddingException;
 import com.george.model.Post;
 import com.george.model.PostRepository;
+import com.george.service.api.EmbeddingProvider;
+import com.george.service.PostDocumentConverter;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -24,19 +25,22 @@ public class CreateEmbeddings {
 
     private static final Logger logger = LoggerFactory.getLogger(CreateEmbeddings.class);
 
-    private final VectorEmbeddings embeddingProvider;
+    private final EmbeddingProvider embeddingProvider;
     private final PostRepository postRepository;
     private final AppProperties appProperties;
     private final MongoClient mongoClient;
+    private final PostDocumentConverter documentConverter;
 
-    public CreateEmbeddings(VectorEmbeddings embeddingProvider,
+    public CreateEmbeddings(EmbeddingProvider embeddingProvider,
                             PostRepository postRepository,
                             AppProperties appProperties,
-                            MongoClient mongoClient) {
+                            MongoClient mongoClient,
+                            PostDocumentConverter documentConverter) {
         this.embeddingProvider = embeddingProvider;
         this.postRepository = postRepository;
         this.appProperties = appProperties;
         this.mongoClient = mongoClient;
+        this.documentConverter = documentConverter;
     }
 
     public void createEmbeddings() {
@@ -63,36 +67,7 @@ public class CreateEmbeddings {
                     continue;
                 }
                 
-                List<String> techsList = post.getRequiredTechs() != null 
-                    ? new ArrayList<>(post.getRequiredTechs()) 
-                    : new ArrayList<>();
-                
-                Document doc = new Document()
-                    .append("jobTitle", post.getJobTitle())
-                    .append("jobDescription", post.getJobDescription())
-                    .append("experience", post.getExperience())
-                    .append("requiredTechs", techsList);
-                
-                if (post.getCompany() != null) {
-                    doc.append("company", post.getCompany());
-                }
-                if (post.getLocation() != null) {
-                    doc.append("location", post.getLocation());
-                }
-                if (post.getEmploymentType() != null) {
-                    doc.append("employmentType", post.getEmploymentType());
-                }
-                if (post.getSalaryMin() != null) {
-                    doc.append("salaryMin", post.getSalaryMin());
-                }
-                if (post.getSalaryMax() != null) {
-                    doc.append("salaryMax", post.getSalaryMax());
-                }
-                if (post.getCurrency() != null) {
-                    doc.append("currency", post.getCurrency());
-                }
-                
-                documents.add(doc);
+                documents.add(documentConverter.toDocument(post));
                 descriptions.add(post.getJobDescription());
             }
 
