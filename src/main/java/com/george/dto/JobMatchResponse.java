@@ -6,7 +6,6 @@ import java.util.List;
 public class JobMatchResponse {
     private List<JobMatch> matches;
     private Integer totalMatches;
-    private String queryId;
     
     public JobMatchResponse() {}
     
@@ -30,14 +29,6 @@ public class JobMatchResponse {
     
     public void setTotalMatches(Integer totalMatches) {
         this.totalMatches = totalMatches;
-    }
-    
-    public String getQueryId() {
-        return queryId;
-    }
-    
-    public void setQueryId(String queryId) {
-        this.queryId = queryId;
     }
 }
 

@@ -22,11 +22,22 @@ public class EmbeddingCacheService {
     @Cacheable(value = "embeddings", key = "#text")
     @Timed(value = "embeddings.cache.operation", description = "Time taken for embedding cache operations")
     public BsonArray getCachedEmbedding(String text) {
-        logger.debug("Getting cached embedding for text length: {}", text != null ? text.length() : 0);
+        if (text == null || text.trim().isEmpty()) {
+            throw new IllegalArgumentException("Text cannot be null or empty");
+        }
+        if (embeddingProvider == null) {
+            throw new IllegalStateException("EmbeddingProvider is not available");
+        }
+        
+        logger.debug("Getting cached embedding for text length: {}", text.length());
         
         BsonArray embedding = embeddingProvider.getEmbedding(text);
         
-        logger.debug("Generated embedding with dimension: {}", embedding != null ? embedding.size() : 0);
+        if (embedding == null) {
+            throw new IllegalStateException("Failed to generate embedding - received null result");
+        }
+        
+        logger.debug("Generated embedding with dimension: {}", embedding.size());
         return embedding;
     }
 }

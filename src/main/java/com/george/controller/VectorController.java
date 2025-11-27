@@ -1,7 +1,6 @@
 package com.george.controller;
 
 import com.george.service.CreateEmbeddings;
-import com.george.config.AppProperties;
 import com.george.dto.JobMatchRequest;
 import com.george.dto.JobMatchResponse;
 import com.george.model.JobMatch;
@@ -17,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("${app.api.base-path:/api/v1}/vectors")
@@ -26,14 +24,11 @@ public class VectorController {
     
     private final CreateEmbeddings createEmbeddingsService;
     private final JobMatchingService jobMatchingService;
-    private final AppProperties appProperties;
 
     public VectorController(CreateEmbeddings createEmbeddingsService,
-                            JobMatchingService jobMatchingService,
-                            AppProperties appProperties) {
+                            JobMatchingService jobMatchingService) {
         this.createEmbeddingsService = createEmbeddingsService;
         this.jobMatchingService = jobMatchingService;
-        this.appProperties = appProperties;
     }
 
     @Operation(
@@ -83,11 +78,8 @@ public class VectorController {
     public ResponseEntity<JobMatchResponse> findMatchingJobs(
             @Valid @RequestBody JobMatchRequest request) {
         
-        String queryId = UUID.randomUUID().toString();
         List<JobMatch> matches = jobMatchingService.findMatchingJobs(request);
-
         JobMatchResponse response = new JobMatchResponse(matches);
-        response.setQueryId(queryId);
 
         return ResponseEntity.ok(response);
     }
@@ -100,10 +92,9 @@ public class VectorController {
     public ResponseEntity<JobMatchResponse> findMatchingJobsSimple(
             @RequestBody String userProfile) {
         
-        JobMatchRequest request = new JobMatchRequest(userProfile);
-        request.setLimit(appProperties.getMatching().getDefaultLimit());
-        request.setMinConfidence(appProperties.getMatching().getDefaultMinConfidence());
+        List<JobMatch> matches = jobMatchingService.findMatchingJobsSimple(userProfile);
+        JobMatchResponse response = new JobMatchResponse(matches);
         
-        return findMatchingJobs(request);
+        return ResponseEntity.ok(response);
     }
 }
