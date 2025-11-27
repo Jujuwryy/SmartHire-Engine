@@ -25,14 +25,37 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,env,loggers
   endpoint:
     health:
       show-details: when-authorized
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   metrics:
     export:
       prometheus:
         enabled: true
+        step: 30s
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:development}
+    web:
+      server:
+        auto-time-requests: true
 
 springdoc:
   api-docs:
@@ -50,13 +73,21 @@ logging:
     root: INFO
     com.george: DEBUG
     org.springframework.data.mongodb: DEBUG
+    org.springframework.web: INFO
+    org.springframework.boot.actuate: INFO
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
   file:
     name: logs/smarthire-engine.log
     max-size: 10MB
     max-history: 30
+    total-size-cap: 300MB
+  # Enable async logging for better performance
+  async:
+    enabled: true
+    queue-capacity: 1000
+    include-caller-info: false
 
 app:
   mongodb:

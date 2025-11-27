@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 @Aspect
 @Component
@@ -28,41 +27,44 @@ public class LoggingAspect {
         String className = joinPoint.getTarget().getClass().getSimpleName();
         Object[] args = joinPoint.getArgs();
         
-        String requestId = UUID.randomUUID().toString();
-        
-        logger.debug("[{}] Entering {}.{}() with args: {}", 
-            requestId, className, methodName, sanitizeArguments(args));
-        
-        long startTime = System.currentTimeMillis();
-        
         try {
-            Object result = joinPoint.proceed();
-            long executionTime = System.currentTimeMillis() - startTime;
+            logger.debug("Entering {}.{}() with args: {}", 
+                className, methodName, sanitizeArguments(args));
             
-            if (result != null) {
-                String resultStr = result.toString();
-                if (resultStr.length() > 200) {
-                    logger.debug("[{}] Exiting {}.{}() - execution time: {}ms - result: [truncated]", 
-                        requestId, className, methodName, executionTime);
+            long startTime = System.currentTimeMillis();
+            
+            try {
+                Object result = joinPoint.proceed();
+                long executionTime = System.currentTimeMillis() - startTime;
+                
+                if (result != null) {
+                    String resultStr = result.toString();
+                    if (resultStr.length() > 200) {
+                        logger.debug("Exiting {}.{}() - execution time: {}ms - result: [truncated]", 
+                            className, methodName, executionTime);
+                    } else {
+                        logger.debug("Exiting {}.{}() - execution time: {}ms - result: {}", 
+                            className, methodName, executionTime, result);
+                    }
                 } else {
-                    logger.debug("[{}] Exiting {}.{}() - execution time: {}ms - result: {}", 
-                        requestId, className, methodName, executionTime, result);
+                    logger.debug("Exiting {}.{}() - execution time: {}ms - result: null", 
+                        className, methodName, executionTime);
                 }
-            } else {
-                logger.debug("[{}] Exiting {}.{}() - execution time: {}ms - result: null", 
-                    requestId, className, methodName, executionTime);
+                
+                if (executionTime > 1000) {
+                    logger.warn("Slow operation detected: {}.{}() took {}ms", 
+                        className, methodName, executionTime);
+                }
+                
+                return result;
+            } catch (Throwable e) {
+                long executionTime = System.currentTimeMillis() - startTime;
+                logger.error("Exception in {}.{}() after {}ms - error: {}", 
+                    className, methodName, executionTime, e.getMessage(), e);
+                throw e;
             }
-            
-            if (executionTime > 1000) {
-                logger.info("[{}] Slow operation detected: {}.{}() took {}ms", 
-                    requestId, className, methodName, executionTime);
-            }
-            
-            return result;
         } catch (Throwable e) {
-            long executionTime = System.currentTimeMillis() - startTime;
-            logger.error("[{}] Exception in {}.{}() after {}ms", 
-                requestId, className, methodName, executionTime, e);
+            logger.error("Error in logging aspect", e);
             throw e;
         }
     }
