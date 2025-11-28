@@ -78,6 +78,9 @@ public class JobMatchingService {
         if (userProfile == null || userProfile.trim().isEmpty()) {
             throw new IllegalArgumentException("User profile cannot be null or empty");
         }
+        if (userProfile.length() > 2000) {
+            throw new IllegalArgumentException("User profile cannot exceed 2000 characters");
+        }
         if (appProperties == null || appProperties.getMatching() == null) {
             throw new IllegalStateException("Matching configuration is not available");
         }
