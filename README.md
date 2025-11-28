@@ -14,7 +14,8 @@ The system fetches job postings, generates embeddings using the `mixedbread-ai/m
 - **Confidence Scoring**: Provides similarity scores (0-1) and human-readable match reasons with detailed explanations.
 - **RESTful API**: Comprehensive RESTful API with Swagger/OpenAPI documentation.
 - **Caching**: Intelligent caching layer for embeddings and query results to improve performance.
-- **Monitoring**: Built-in metrics and health checks via Spring Boot Actuator.
+- **Monitoring & Observability**: Built-in metrics, health checks, and distributed tracing with Micrometer and Zipkin.
+- **Security**: Rate limiting, Actuator endpoint protection, security headers, and configurable CORS.
 - **Error Handling**: Comprehensive error handling with structured error responses.
 - **Validation**: Request validation with detailed error messages.
 - **Pagination & Filtering**: Advanced filtering options including confidence thresholds and result limits.
@@ -27,7 +28,8 @@ The system fetches job postings, generates embeddings using the `mixedbread-ai/m
 - **AI Model**: Hugging Face `mixedbread-ai/mxbai-embed-large-v1` via LangChain4J
 - **API Documentation**: Swagger/OpenAPI 3.0
 - **Caching**: Caffeine
-- **Monitoring**: Spring Boot Actuator, Micrometer, Prometheus
+- **Monitoring**: Spring Boot Actuator, Micrometer, Prometheus, Zipkin
+- **Security**: Bucket4j (Rate Limiting), Security Headers, IP-based Actuator protection
 - **Dependencies**:
   - Spring Data MongoDB
   - Spring Boot Web
@@ -36,6 +38,8 @@ The system fetches job postings, generates embeddings using the `mixedbread-ai/m
   - MongoDB Java Driver
   - SpringDoc OpenAPI
   - Caffeine Cache
+  - Bucket4j (Rate Limiting)
+  - Micrometer Tracing
 
 ## Workflow
 
@@ -71,6 +75,13 @@ The system fetches job postings, generates embeddings using the `mixedbread-ai/m
 - **Environment Variables**:
   - `ATLAS_CONNECTION_STRING`: MongoDB Atlas connection string (e.g., `mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/`).
   - `HUGGING_FACE_ACCESS_TOKEN`: Your Hugging Face API token.
+  
+  **Optional Configuration Variables**:
+  - `MONGO_DATABASE_NAME`: MongoDB database name (default: `jobs_db`)
+  - `MONGO_COLLECTION_NAME`: MongoDB collection name (default: `JobPost`)
+  - `EMBEDDING_MODEL_ID`: Hugging Face model ID (default: `mixedbread-ai/mxbai-embed-large-v1`)
+  - `ENVIRONMENT`: Environment name for metrics tagging (default: `development`)
+  - `ZIPKIN_ENDPOINT`: Zipkin endpoint for distributed tracing (default: `http://localhost:9411/api/v2/spans`)
 
 ## API Endpoints
 
@@ -137,4 +148,76 @@ The system fetches job postings, generates embeddings using the `mixedbread-ai/m
    - Swagger UI: `http://localhost:8080/swagger-ui.html`
    - Health Check: `http://localhost:8080/actuator/health`
    - Metrics: `http://localhost:8080/actuator/metrics`
+   - Prometheus: `http://localhost:8080/actuator/prometheus`
+
+## Security Features
+
+### Rate Limiting
+The API implements IP-based rate limiting to prevent abuse:
+- **`/generate` endpoint**: 5 requests per 60 minutes (configurable)
+- **`/jobs/match` endpoints**: 100 requests per minute (configurable)
+- Returns `429 Too Many Requests` when limit is exceeded
+
+**Configuration**:
+```bash
+RATE_LIMIT_GENERATE_REQUESTS=5
+RATE_LIMIT_GENERATE_WINDOW=60
+RATE_LIMIT_MATCH_REQUESTS=100
+RATE_LIMIT_MATCH_WINDOW=1
+```
+
+### Actuator Security
+Actuator endpoints are protected by IP whitelist:
+- Only `health`, `metrics`, and `prometheus` endpoints are exposed
+- Sensitive endpoints (`env`, `loggers`, `info`) are disabled
+- IP whitelist configurable via `ACTUATOR_ALLOWED_IPS`
+
+**Configuration**:
+```bash
+ACTUATOR_ALLOWED_IPS=127.0.0.1,::1,10.0.0.0/8
+ACTUATOR_HEALTH_DETAILS=never
+ACTUATOR_HEALTH_COMPONENTS=false
+```
+
+### Security Headers
+The API automatically adds security headers to all responses:
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection: 1; mode=block`
+- `Strict-Transport-Security` (HSTS)
+- `Content-Security-Policy`
+
+### CORS Configuration
+CORS is configurable via environment variables:
+```bash
+CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
+```
+
+### Production Configuration
+For production deployment, set these environment variables:
+```bash
+# Error Handling
+INCLUDE_STACKTRACE=never
+INCLUDE_ERROR_MESSAGE=never
+INCLUDE_EXCEPTION=false
+
+# Swagger UI
+SWAGGER_ENABLED=false
+
+# Actuator
+ACTUATOR_HEALTH_DETAILS=never
+ACTUATOR_HEALTH_COMPONENTS=false
+```
+
+## Testing
+
+Run tests with:
+```bash
+mvn test
+```
+
+The test suite includes:
+- Unit tests for services (JobMatchingService, EmbeddingCacheService, MatchingParameterNormalizer)
+- Integration tests for API endpoints
+- Exception handler tests
 
