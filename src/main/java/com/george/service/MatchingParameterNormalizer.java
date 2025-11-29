@@ -1,6 +1,7 @@
 package com.george.service;
 
 import com.george.config.AppProperties;
+import com.george.util.Constants;
 import com.george.util.TextPreprocessor;
 import org.springframework.stereotype.Component;
 
@@ -8,7 +9,6 @@ import org.springframework.stereotype.Component;
 public class MatchingParameterNormalizer {
     
     private final AppProperties appProperties;
-    private static final int MAX_PROFILE_LENGTH = 2000;
     
     public MatchingParameterNormalizer(AppProperties appProperties) {
         this.appProperties = appProperties;
@@ -20,7 +20,7 @@ public class MatchingParameterNormalizer {
         }
         
         String processed = TextPreprocessor.preprocess(userProfile);
-        return TextPreprocessor.validateAndTruncate(processed, MAX_PROFILE_LENGTH);
+        return TextPreprocessor.validateAndTruncate(processed, Constants.MAX_USER_PROFILE_LENGTH);
     }
     
     public int normalizeLimit(Integer limit) {

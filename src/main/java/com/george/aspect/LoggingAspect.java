@@ -1,5 +1,6 @@
 package com.george.aspect;
 
+import com.george.util.Constants;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -39,7 +40,7 @@ public class LoggingAspect {
                 
                 if (result != null) {
                     String resultStr = result.toString();
-                    if (resultStr.length() > 200) {
+                    if (resultStr.length() > Constants.MAX_RESULT_DISPLAY_LENGTH) {
                         logger.debug("Exiting {}.{}() - execution time: {}ms - result: [truncated]", 
                             className, methodName, executionTime);
                     } else {
@@ -51,7 +52,7 @@ public class LoggingAspect {
                         className, methodName, executionTime);
                 }
                 
-                if (executionTime > 1000) {
+                if (executionTime > Constants.SLOW_OPERATION_THRESHOLD_MS) {
                     logger.warn("Slow operation detected: {}.{}() took {}ms", 
                         className, methodName, executionTime);
                 }
@@ -80,8 +81,8 @@ public class LoggingAspect {
                     return "null";
                 }
                 String argStr = arg.toString();
-                if (argStr.length() > 100) {
-                    return argStr.substring(0, 100) + "... [truncated]";
+                if (argStr.length() > Constants.MAX_ARGUMENT_DISPLAY_LENGTH) {
+                    return argStr.substring(0, Constants.MAX_ARGUMENT_DISPLAY_LENGTH) + "... [truncated]";
                 }
                 if (argStr.contains("token") || argStr.contains("password") || argStr.contains("secret")) {
                     return "[REDACTED]";

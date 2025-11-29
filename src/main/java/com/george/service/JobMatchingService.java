@@ -4,6 +4,7 @@ import com.george.config.AppProperties;
 import com.george.dto.JobMatchRequest;
 import com.george.exception.JobMatchingException;
 import com.george.model.JobMatch;
+import com.george.util.Constants;
 import com.george.util.DocumentMapper;
 import com.george.util.MatchReasonGenerator;
 import com.mongodb.client.MongoClient;
@@ -78,8 +79,8 @@ public class JobMatchingService {
         if (userProfile == null || userProfile.trim().isEmpty()) {
             throw new IllegalArgumentException("User profile cannot be null or empty");
         }
-        if (userProfile.length() > 2000) {
-            throw new IllegalArgumentException("User profile cannot exceed 2000 characters");
+        if (userProfile.length() > Constants.MAX_USER_PROFILE_LENGTH) {
+            throw new IllegalArgumentException("User profile cannot exceed " + Constants.MAX_USER_PROFILE_LENGTH + " characters");
         }
         if (appProperties == null || appProperties.getMatching() == null) {
             throw new IllegalStateException("Matching configuration is not available");
@@ -171,7 +172,7 @@ public class JobMatchingService {
                     }
                 });
 
-            return matches != null ? matches : new ArrayList<>();
+            return matches;
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (IllegalStateException e) {

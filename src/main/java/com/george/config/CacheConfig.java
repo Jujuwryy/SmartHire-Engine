@@ -1,5 +1,6 @@
 package com.george.config;
 
+import com.george.util.Constants;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -21,7 +22,7 @@ public class CacheConfig {
         );
         
         cacheManager.setCaffeine(Caffeine.newBuilder()
-            .maximumSize(1000)
+            .maximumSize(Constants.CACHE_MAX_SIZE)
             .expireAfterWrite(24, TimeUnit.HOURS)
             .recordStats());
         
