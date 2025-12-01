@@ -94,7 +94,7 @@ public class CreateEmbeddings {
             
             for (Post post : existingPosts) {
                 if (post == null) {
-                    logger.warn("Skipping null post");
+                    logger.warn("Skipping null post in embedding generation");
                     continue;
                 }
                 if (post.getJobDescription() == null || post.getJobDescription().trim().isEmpty()) {

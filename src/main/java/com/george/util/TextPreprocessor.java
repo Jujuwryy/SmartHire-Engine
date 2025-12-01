@@ -11,8 +11,12 @@ public class TextPreprocessor {
     
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
     
+    public static boolean isNullOrEmpty(String text) {
+        return text == null || text.trim().isEmpty();
+    }
+    
     public static String preprocess(String text) {
-        if (text == null || text.trim().isEmpty()) {
+        if (isNullOrEmpty(text)) {
             return "";
         }
         
