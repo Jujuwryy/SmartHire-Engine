@@ -173,11 +173,7 @@ public class JobMatchingService {
                 });
 
             return matches;
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (JobMatchingException e) {
+        } catch (IllegalArgumentException | IllegalStateException | JobMatchingException e) {
             throw e;
         } catch (Exception e) {
             throw new JobMatchingException("Failed to perform job matching", e);

@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class MatchReasonGenerator {
     
     private static final Logger logger = LoggerFactory.getLogger(MatchReasonGenerator.class);
+    private static final String CONFIDENCE_FORMAT = "%.2f";
     
     private final AppProperties appProperties;
     
@@ -42,11 +43,11 @@ public class MatchReasonGenerator {
             double moderateThreshold = appProperties.getMatching().getThresholds().getModerate();
             
             if (score >= veryStrongThreshold) {
-                reasons.add("Very strong semantic match (confidence: " + String.format("%.2f", score) + ")");
+                reasons.add("Very strong semantic match (confidence: " + String.format(CONFIDENCE_FORMAT, score) + ")");
             } else if (score >= goodThreshold) {
-                reasons.add("Good semantic match (confidence: " + String.format("%.2f", score) + ")");
+                reasons.add("Good semantic match (confidence: " + String.format(CONFIDENCE_FORMAT, score) + ")");
             } else if (score >= moderateThreshold) {
-                reasons.add("Moderate semantic match (confidence: " + String.format("%.2f", score) + ")");
+                reasons.add("Moderate semantic match (confidence: " + String.format(CONFIDENCE_FORMAT, score) + ")");
             }
             
             List<String> techs = doc.getList("requiredTechs", String.class);
