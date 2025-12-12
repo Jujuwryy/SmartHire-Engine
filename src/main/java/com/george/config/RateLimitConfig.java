@@ -34,6 +34,7 @@ public class RateLimitConfig {
     private int matchWindowMinutes;
 
     @Bean
+    @org.springframework.core.annotation.Order(3)
     public RateLimitFilter rateLimitFilter() {
         return new RateLimitFilter(generateRequests, generateWindowMinutes, matchRequests, matchWindowMinutes);
     }
@@ -59,6 +60,10 @@ public class RateLimitConfig {
                     matchRequests,
                     Refill.intervally(matchRequests, Duration.ofMinutes(matchWindowMinutes))
             );
+        }
+
+        public void clearCache() {
+            cache.invalidateAll();
         }
 
         @Override
