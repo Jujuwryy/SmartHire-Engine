@@ -81,7 +81,7 @@ public class VectorEmbeddings implements EmbeddingProvider {
                     .toList();
         } catch (EmbeddingException | IllegalArgumentException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new EmbeddingException("Failed to generate embeddings", e);
         }
     }
@@ -104,7 +104,7 @@ public class VectorEmbeddings implements EmbeddingProvider {
                             .toList());
         } catch (EmbeddingException | IllegalArgumentException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new EmbeddingException("Failed to generate embedding", e);
         }
     }

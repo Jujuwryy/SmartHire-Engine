@@ -146,7 +146,7 @@ public class CreateEmbeddings {
             throw e;
         } catch (IllegalStateException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             throw new EmbeddingException("Failed to generate embeddings", e);
         }
     }
