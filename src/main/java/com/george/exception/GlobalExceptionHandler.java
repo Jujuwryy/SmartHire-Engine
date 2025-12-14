@@ -27,6 +27,7 @@ public class GlobalExceptionHandler {
         logger.debug("Handling EmbeddingException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            ex.getErrorCode().getCode(),
             "Embedding Generation Failed",
             ex.getMessage(),
             request.getDescription(false).replace("uri=", "")
@@ -40,6 +41,7 @@ public class GlobalExceptionHandler {
         logger.debug("Handling JobMatchingException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            ex.getErrorCode().getCode(),
             "Job Matching Failed",
             ex.getMessage(),
             request.getDescription(false).replace("uri=", "")
@@ -53,6 +55,7 @@ public class GlobalExceptionHandler {
         logger.debug("Handling ExportException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            ex.getErrorCode().getCode(),
             "Export Failed",
             ex.getMessage(),
             request.getDescription(false).replace("uri=", "")
@@ -72,6 +75,7 @@ public class GlobalExceptionHandler {
         
         ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),
+            ErrorCode.VALIDATION_FAILED.getCode(),
             "Validation Failed",
             "Request validation failed",
             request.getDescription(false).replace("uri=", "")
@@ -91,6 +95,7 @@ public class GlobalExceptionHandler {
         
         ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),
+            ErrorCode.VALIDATION_CONSTRAINT_VIOLATION.getCode(),
             "Validation Failed",
             "Constraint validation failed",
             request.getDescription(false).replace("uri=", "")
@@ -105,6 +110,7 @@ public class GlobalExceptionHandler {
         logger.debug("Handling illegal argument exception for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),
+            ErrorCode.VALIDATION_INVALID_ARGUMENT.getCode(),
             "Invalid Argument",
             ex.getMessage(),
             request.getDescription(false).replace("uri=", "")
@@ -118,6 +124,7 @@ public class GlobalExceptionHandler {
         logger.error("Unhandled exception in REST layer", ex);
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            ErrorCode.INTERNAL_UNEXPECTED_ERROR.getCode(),
             "Internal Server Error",
             "An unexpected error occurred",
             request.getDescription(false).replace("uri=", "")
