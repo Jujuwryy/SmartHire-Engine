@@ -6,6 +6,7 @@ import java.util.List;
 public class ErrorResponse {
     private final LocalDateTime timestamp;
     private int status;
+    private String errorCode;
     private String error;
     private String message;
     private String path;
@@ -18,6 +19,15 @@ public class ErrorResponse {
     public ErrorResponse(int status, String error, String message, String path) {
         this();
         this.status = status;
+        this.error = error;
+        this.message = message;
+        this.path = path;
+    }
+    
+    public ErrorResponse(int status, String errorCode, String error, String message, String path) {
+        this();
+        this.status = status;
+        this.errorCode = errorCode;
         this.error = error;
         this.message = message;
         this.path = path;
@@ -65,6 +75,14 @@ public class ErrorResponse {
     
     public void setDetails(List<String> details) {
         this.details = details;
+    }
+    
+    public String getErrorCode() {
+        return errorCode;
+    }
+    
+    public void setErrorCode(String errorCode) {
+        this.errorCode = errorCode;
     }
 }
 
