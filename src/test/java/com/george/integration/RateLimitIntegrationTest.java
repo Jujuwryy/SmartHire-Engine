@@ -48,7 +48,9 @@ class RateLimitIntegrationTest extends BaseIntegrationTest {
                         .header("X-Forwarded-For", "127.0.0.11"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.error").value("Rate limit exceeded. Please try again later."));
+                .andExpect(jsonPath("$.errorCode").value("RATE_002"))
+                .andExpect(jsonPath("$.error").value("Rate Limit Exceeded"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Rate limit exceeded")));
     }
 
     @Test
@@ -83,7 +85,9 @@ class RateLimitIntegrationTest extends BaseIntegrationTest {
                         .header("X-Forwarded-For", "127.0.0.100"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.error").value("Rate limit exceeded. Please try again later."));
+                .andExpect(jsonPath("$.errorCode").value("RATE_003"))
+                .andExpect(jsonPath("$.error").value("Rate Limit Exceeded"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Rate limit exceeded")));
     }
 
     @Test
@@ -116,6 +120,8 @@ class RateLimitIntegrationTest extends BaseIntegrationTest {
                         .header("X-Forwarded-For", "127.0.0.30"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.error").value("Rate limit exceeded. Please try again later."));
+                .andExpect(jsonPath("$.errorCode").value("RATE_003"))
+                .andExpect(jsonPath("$.error").value("Rate Limit Exceeded"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Rate limit exceeded")));
     }
 }
