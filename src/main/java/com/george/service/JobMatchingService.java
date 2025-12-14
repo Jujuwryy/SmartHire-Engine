@@ -2,6 +2,7 @@ package com.george.service;
 
 import com.george.config.AppProperties;
 import com.george.dto.JobMatchRequest;
+import com.george.exception.ErrorCode;
 import com.george.exception.JobMatchingException;
 import com.george.model.JobMatch;
 import com.george.util.Constants;
@@ -123,7 +124,7 @@ public class JobMatchingService {
 
         BsonArray userEmbedding = embeddingCacheService.getCachedEmbedding(processedProfile);
         if (userEmbedding == null) {
-            throw new JobMatchingException("Failed to generate embedding for user profile");
+            throw new JobMatchingException(ErrorCode.JOB_MATCHING_EMBEDDING_ERROR, "Failed to generate embedding for user profile");
         }
 
         try {
@@ -139,17 +140,17 @@ public class JobMatchingService {
             
             MongoDatabase database = mongoClient.getDatabase(databaseName);
             if (database == null) {
-                throw new JobMatchingException("Failed to access MongoDB database: " + databaseName);
+                throw new JobMatchingException(ErrorCode.JOB_MATCHING_DATABASE_ERROR, "Failed to access MongoDB database: " + databaseName);
             }
             
             MongoCollection<Document> collection = database.getCollection(collectionName);
             if (collection == null) {
-                throw new JobMatchingException("Failed to access MongoDB collection: " + collectionName);
+                throw new JobMatchingException(ErrorCode.JOB_MATCHING_DATABASE_ERROR, "Failed to access MongoDB collection: " + collectionName);
             }
 
             List<Document> pipeline = queryBuilder.buildSearchPipeline(userEmbedding, normalizedLimit, normalizedMinConfidence);
             if (pipeline == null || pipeline.isEmpty()) {
-                throw new JobMatchingException("Failed to build search pipeline");
+                throw new JobMatchingException(ErrorCode.JOB_MATCHING_FAILED, "Failed to build search pipeline");
             }
 
             List<JobMatch> matches = new ArrayList<>();
@@ -176,7 +177,7 @@ public class JobMatchingService {
         } catch (IllegalArgumentException | IllegalStateException | JobMatchingException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new JobMatchingException("Failed to perform job matching", e);
+            throw new JobMatchingException(ErrorCode.JOB_MATCHING_DATABASE_ERROR, "Failed to perform job matching", e);
         }
     }
 }

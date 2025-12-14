@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.george.dto.JobMatchResponse;
+import com.george.exception.ErrorCode;
 import com.george.exception.ExportException;
 import com.george.model.JobMatch;
 import com.george.model.Post;
@@ -32,7 +33,7 @@ public class ExportService {
             return objectMapper.writeValueAsString(response);
         } catch (JsonProcessingException e) {
             logger.error("Failed to export job matches to JSON", e);
-            throw new ExportException("Failed to export job matches to JSON", e);
+            throw new ExportException(ErrorCode.EXPORT_JSON_ERROR, "Failed to export job matches to JSON", e);
         }
     }
 

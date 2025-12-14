@@ -2,6 +2,7 @@ package com.george.service;
 
 import com.george.config.AppProperties;
 import com.george.exception.EmbeddingException;
+import com.george.exception.ErrorCode;
 import com.george.model.Post;
 import com.george.model.PostRepository;
 import com.george.service.api.EmbeddingProvider;
@@ -137,17 +138,17 @@ public class CreateEmbeddings {
 
             InsertManyResult result = collection.insertMany(documents);
             if (result == null) {
-                throw new EmbeddingException("Failed to insert documents - received null result");
+                throw new EmbeddingException(ErrorCode.EMBEDDING_GENERATION_FAILED, "Failed to insert documents - received null result");
             }
             logger.info("Successfully inserted {} documents with embeddings", result.getInsertedIds().size());
         } catch (MongoException me) {
-            throw new EmbeddingException("Failed to perform MongoDB operation", me);
+            throw new EmbeddingException(ErrorCode.EMBEDDING_GENERATION_FAILED, "Failed to perform MongoDB operation", me);
         } catch (EmbeddingException e) {
             throw e;
         } catch (IllegalStateException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new EmbeddingException("Failed to generate embeddings", e);
+            throw new EmbeddingException(ErrorCode.EMBEDDING_GENERATION_FAILED, "Failed to generate embeddings", e);
         }
     }
 }

@@ -3,6 +3,7 @@ package com.george.service.embedding;
 import com.george.config.AppProperties;
 import com.george.service.api.EmbeddingProvider;
 import com.george.exception.EmbeddingException;
+import com.george.exception.ErrorCode;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
@@ -34,7 +35,7 @@ public class VectorEmbeddings implements EmbeddingProvider {
                 if (embeddingModel == null) {
                     String accessToken = appProperties.getEmbeddings().getHuggingface().getAccessToken();
                     if (accessToken == null || accessToken.isEmpty()) {
-                        throw new EmbeddingException("HUGGING_FACE_ACCESS_TOKEN environment variable is not set or is empty");
+                        throw new EmbeddingException(ErrorCode.EMBEDDING_PROVIDER_ERROR, "HUGGING_FACE_ACCESS_TOKEN environment variable is not set or is empty");
                     }
                     String modelId = appProperties.getEmbeddings().getHuggingface().getModelId();
                     int timeout = appProperties.getEmbeddings().getHuggingface().getTimeoutSeconds();
@@ -65,13 +66,13 @@ public class VectorEmbeddings implements EmbeddingProvider {
             Response<List<Embedding>> response = getEmbeddingModel().embedAll(textSegments);
             
             if (response == null || response.content() == null) {
-                throw new EmbeddingException("Received null response from embedding model");
+                throw new EmbeddingException(ErrorCode.EMBEDDING_PROVIDER_ERROR, "Received null response from embedding model");
             }
             
             return response.content().stream()
                     .map(e -> {
                         if (e == null || e.vectorAsList() == null) {
-                            throw new EmbeddingException("Received null embedding vector");
+                            throw new EmbeddingException(ErrorCode.EMBEDDING_PROVIDER_ERROR, "Received null embedding vector");
                         }
                         return new BsonArray(
                                 e.vectorAsList().stream()
@@ -82,7 +83,7 @@ public class VectorEmbeddings implements EmbeddingProvider {
         } catch (EmbeddingException | IllegalArgumentException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new EmbeddingException("Failed to generate embeddings", e);
+            throw new EmbeddingException(ErrorCode.EMBEDDING_PROVIDER_ERROR, "Failed to generate embeddings", e);
         }
     }
 
@@ -95,7 +96,7 @@ public class VectorEmbeddings implements EmbeddingProvider {
             Response<Embedding> response = getEmbeddingModel().embed(text);
             
             if (response == null || response.content() == null) {
-                throw new EmbeddingException("Received null response from embedding model");
+                throw new EmbeddingException(ErrorCode.EMBEDDING_PROVIDER_ERROR, "Received null response from embedding model");
             }
             
             return new BsonArray(
@@ -105,7 +106,7 @@ public class VectorEmbeddings implements EmbeddingProvider {
         } catch (EmbeddingException | IllegalArgumentException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new EmbeddingException("Failed to generate embedding", e);
+            throw new EmbeddingException(ErrorCode.EMBEDDING_PROVIDER_ERROR, "Failed to generate embedding", e);
         }
     }
 }
