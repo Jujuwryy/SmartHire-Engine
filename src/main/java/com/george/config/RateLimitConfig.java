@@ -1,5 +1,8 @@
 package com.george.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.george.dto.ErrorResponse;
+import com.george.exception.ErrorCode;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
@@ -9,6 +12,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,19 +37,23 @@ public class RateLimitConfig {
     @Value("${app.security.rate-limit.match.window-minutes:1}")
     private int matchWindowMinutes;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Bean
     @org.springframework.core.annotation.Order(3)
     public RateLimitFilter rateLimitFilter() {
-        return new RateLimitFilter(generateRequests, generateWindowMinutes, matchRequests, matchWindowMinutes);
+        return new RateLimitFilter(generateRequests, generateWindowMinutes, matchRequests, matchWindowMinutes, objectMapper);
     }
 
     public static class RateLimitFilter extends OncePerRequestFilter {
         private final Cache<String, Bucket> cache;
         private final Bandwidth generateBandwidth;
         private final Bandwidth matchBandwidth;
+        private final ObjectMapper objectMapper;
 
         public RateLimitFilter(int generateRequests, int generateWindowMinutes, 
-                              int matchRequests, int matchWindowMinutes) {
+                              int matchRequests, int matchWindowMinutes, ObjectMapper objectMapper) {
             this.cache = Caffeine.newBuilder()
                     .maximumSize(10_000)
                     .expireAfterAccess(Duration.ofHours(1))
@@ -60,6 +68,8 @@ public class RateLimitConfig {
                     matchRequests,
                     Refill.intervally(matchRequests, Duration.ofMinutes(matchWindowMinutes))
             );
+            
+            this.objectMapper = objectMapper;
         }
 
         public void clearCache() {
@@ -76,22 +86,32 @@ public class RateLimitConfig {
             if (path.contains("/generate")) {
                 Bucket bucket = cache.get(clientId, k -> Bucket.builder().addLimit(generateBandwidth).build());
                 if (!bucket.tryConsume(1)) {
-                    response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Rate limit exceeded. Please try again later.\"}");
+                    sendRateLimitError(response, ErrorCode.RATE_LIMIT_GENERATE_EXCEEDED, path);
                     return;
                 }
             } else if (path.contains("/jobs/match")) {
                 Bucket bucket = cache.get(clientId, k -> Bucket.builder().addLimit(matchBandwidth).build());
                 if (!bucket.tryConsume(1)) {
-                    response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Rate limit exceeded. Please try again later.\"}");
+                    sendRateLimitError(response, ErrorCode.RATE_LIMIT_MATCH_EXCEEDED, path);
                     return;
                 }
             }
 
             filterChain.doFilter(request, response);
+        }
+
+        private void sendRateLimitError(HttpServletResponse response, ErrorCode errorCode, String path) throws IOException {
+            ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                errorCode.getCode(),
+                "Rate Limit Exceeded",
+                errorCode.getDescription() + ". Please try again later.",
+                path
+            );
+            
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setContentType("application/json");
+            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
         }
 
         private String getClientId(HttpServletRequest request) {
