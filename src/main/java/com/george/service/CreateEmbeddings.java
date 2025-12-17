@@ -70,15 +70,9 @@ public class CreateEmbeddings {
         logger.info("Processing {} job posts for embedding generation", existingPosts.size());
         
         try {
+            // Database and collection names are validated at startup by ConfigurationValidator
             String databaseName = appProperties.getMongodb().getDatabaseName();
             String collectionName = appProperties.getMongodb().getCollectionName();
-            
-            if (databaseName == null || databaseName.trim().isEmpty()) {
-                throw new IllegalStateException("Database name is not configured");
-            }
-            if (collectionName == null || collectionName.trim().isEmpty()) {
-                throw new IllegalStateException("Collection name is not configured");
-            }
             
             MongoDatabase database = mongoClient.getDatabase(databaseName);
             if (database == null) {
