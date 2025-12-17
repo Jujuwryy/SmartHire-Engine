@@ -34,10 +34,7 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
     @Override
     @Bean
     public MongoClient mongoClient() {
-        if (connectionString == null || connectionString.isEmpty()) {
-            logger.error("MongoDB connection string is not set. Please set ATLAS_CONNECTION_STRING environment variable");
-            throw new IllegalStateException("ATLAS_CONNECTION_STRING environment variable is not set or is empty");
-        }
+        // Connection string is validated at startup by ConfigurationValidator
         logger.info("Creating MongoDB client connection");
         return MongoClients.create(connectionString);
     }
