@@ -30,13 +30,11 @@ public class VectorEmbeddings implements EmbeddingProvider {
     }
 
     private HuggingFaceEmbeddingModel getEmbeddingModel() {
-        if (embeddingModel == null) {
-            synchronized (VectorEmbeddings.class) {
                 if (embeddingModel == null) {
+                synchronized (VectorEmbeddings.class) {
+                if (embeddingModel == null) {
+                    // Access token and model ID are validated at startup by ConfigurationValidator
                     String accessToken = appProperties.getEmbeddings().getHuggingface().getAccessToken();
-                    if (accessToken == null || accessToken.isEmpty()) {
-                        throw new EmbeddingException(ErrorCode.EMBEDDING_PROVIDER_ERROR, "HUGGING_FACE_ACCESS_TOKEN environment variable is not set or is empty");
-                    }
                     String modelId = appProperties.getEmbeddings().getHuggingface().getModelId();
                     int timeout = appProperties.getEmbeddings().getHuggingface().getTimeoutSeconds();
                     logger.info("Initializing HuggingFace embedding model: {}", modelId);
