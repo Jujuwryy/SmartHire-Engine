@@ -28,44 +28,39 @@ public class LoggingAspect {
         String className = joinPoint.getTarget().getClass().getSimpleName();
         Object[] args = joinPoint.getArgs();
         
+        logger.debug("Entering {}.{}() with args: {}", 
+            className, methodName, sanitizeArguments(args));
+        
+        long startTime = System.currentTimeMillis();
+        
         try {
-            logger.debug("Entering {}.{}() with args: {}", 
-                className, methodName, sanitizeArguments(args));
+            Object result = joinPoint.proceed();
+            long executionTime = System.currentTimeMillis() - startTime;
             
-            long startTime = System.currentTimeMillis();
-            
-            try {
-                Object result = joinPoint.proceed();
-                long executionTime = System.currentTimeMillis() - startTime;
-                
-                if (result != null) {
-                    String resultStr = result.toString();
-                    if (resultStr.length() > Constants.MAX_RESULT_DISPLAY_LENGTH) {
-                        logger.debug("Exiting {}.{}() - execution time: {}ms - result: [truncated]", 
-                            className, methodName, executionTime);
-                    } else {
-                        logger.debug("Exiting {}.{}() - execution time: {}ms - result: {}", 
-                            className, methodName, executionTime, result);
-                    }
+            if (result != null) {
+                String resultStr = result.toString();
+                if (resultStr.length() > Constants.MAX_RESULT_DISPLAY_LENGTH) {
+                    logger.debug("Exiting {}.{}() - execution time: {}ms - result: [truncated]", 
+                        className, methodName, executionTime);
                 } else {
-                    logger.debug("Exiting {}.{}() - execution time: {}ms - result: null", 
-                        className, methodName, executionTime);
+                    logger.debug("Exiting {}.{}() - execution time: {}ms - result: {}", 
+                        className, methodName, executionTime, result);
                 }
-                
-                if (executionTime > Constants.SLOW_OPERATION_THRESHOLD_MS) {
-                    logger.warn("Slow operation detected: {}.{}() took {}ms", 
-                        className, methodName, executionTime);
-                }
-                
-                return result;
-            } catch (Throwable e) {
-                long executionTime = System.currentTimeMillis() - startTime;
-                logger.error("Exception in {}.{}() after {}ms - error: {}", 
-                    className, methodName, executionTime, e.getMessage(), e);
-                throw e;
+            } else {
+                logger.debug("Exiting {}.{}() - execution time: {}ms - result: null", 
+                    className, methodName, executionTime);
             }
+            
+            if (executionTime > Constants.SLOW_OPERATION_THRESHOLD_MS) {
+                logger.warn("Slow operation detected: {}.{}() took {}ms", 
+                    className, methodName, executionTime);
+            }
+            
+            return result;
         } catch (Throwable e) {
-            logger.error("Error in logging aspect", e);
+            long executionTime = System.currentTimeMillis() - startTime;
+            logger.error("Exception in {}.{}() after {}ms - error: {}", 
+                className, methodName, executionTime, e.getMessage(), e);
             throw e;
         }
     }
