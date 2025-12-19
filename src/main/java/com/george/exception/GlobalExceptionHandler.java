@@ -24,7 +24,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmbeddingException.class)
     public ResponseEntity<ErrorResponse> handleEmbeddingException(
             EmbeddingException ex, WebRequest request) {
-        logger.debug("Handling EmbeddingException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             ex.getErrorCode().getCode(),
@@ -38,7 +37,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(JobMatchingException.class)
     public ResponseEntity<ErrorResponse> handleJobMatchingException(
             JobMatchingException ex, WebRequest request) {
-        logger.debug("Handling JobMatchingException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             ex.getErrorCode().getCode(),
@@ -52,7 +50,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ExportException.class)
     public ResponseEntity<ErrorResponse> handleExportException(
             ExportException ex, WebRequest request) {
-        logger.debug("Handling ExportException for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             ex.getErrorCode().getCode(),
@@ -66,7 +63,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
-        logger.debug("Handling validation exception for REST response");
         List<String> errors = ex.getBindingResult()
             .getFieldErrors()
             .stream()
@@ -87,7 +83,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(
             ConstraintViolationException ex, WebRequest request) {
-        logger.debug("Handling constraint violation exception for REST response");
         List<String> errors = ex.getConstraintViolations()
             .stream()
             .map(ConstraintViolation::getMessage)
@@ -107,7 +102,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
-        logger.debug("Handling illegal argument exception for REST response");
         ErrorResponse error = new ErrorResponse(
             HttpStatus.BAD_REQUEST.value(),
             ErrorCode.VALIDATION_INVALID_ARGUMENT.getCode(),
