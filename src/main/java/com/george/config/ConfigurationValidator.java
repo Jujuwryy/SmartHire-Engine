@@ -55,28 +55,28 @@ public class ConfigurationValidator {
     private void validateMongoConfiguration(List<String> errors) {
         // MongoDB connection string
         if (mongoConnectionString == null || mongoConnectionString.trim().isEmpty()) {
-            errors.add("ERROR: ATLAS_CONNECTION_STRING (spring.data.mongodb.uri) is required but not set");
+            errors.add("ATLAS_CONNECTION_STRING (spring.data.mongodb.uri) is required but not set");
         } else if (mongoConnectionString.equals("mongodb://localhost:27017")) {
-            logger.warn("WARNING: Using default MongoDB connection string (localhost:27017). " +
+            logger.warn("Using default MongoDB connection string (localhost:27017). " +
                        "Set ATLAS_CONNECTION_STRING for production.");
         }
         
         // Database name
         String databaseName = appProperties.getMongodb().getDatabaseName();
         if (databaseName == null || databaseName.trim().isEmpty()) {
-            errors.add("ERROR: MONGO_DATABASE_NAME (app.mongodb.database-name) is required but not set");
+            errors.add("MONGO_DATABASE_NAME (app.mongodb.database-name) is required but not set");
         }
         
         // Collection name
         String collectionName = appProperties.getMongodb().getCollectionName();
         if (collectionName == null || collectionName.trim().isEmpty()) {
-            errors.add("ERROR: MONGO_COLLECTION_NAME (app.mongodb.collection-name) is required but not set");
+            errors.add("MONGO_COLLECTION_NAME (app.mongodb.collection-name) is required but not set");
         }
         
         // Vector index name
         String vectorIndexName = appProperties.getMongodb().getVectorIndexName();
         if (vectorIndexName == null || vectorIndexName.trim().isEmpty()) {
-            errors.add("ERROR: MONGO_VECTOR_INDEX_NAME (app.mongodb.vector-index-name) is required but not set");
+            errors.add("MONGO_VECTOR_INDEX_NAME (app.mongodb.vector-index-name) is required but not set");
         }
     }
     
@@ -86,25 +86,25 @@ public class ConfigurationValidator {
         // Access token
         String accessToken = huggingface.getAccessToken();
         if (accessToken == null || accessToken.trim().isEmpty()) {
-            errors.add("ERROR: HUGGING_FACE_ACCESS_TOKEN (app.embeddings.huggingface.access-token) is required but not set");
+            errors.add("HUGGING_FACE_ACCESS_TOKEN (app.embeddings.huggingface.access-token) is required but not set");
         }
         
         // Model ID
         String modelId = huggingface.getModelId();
         if (modelId == null || modelId.trim().isEmpty()) {
-            errors.add("ERROR: EMBEDDING_MODEL_ID (app.embeddings.huggingface.model-id) is required but not set");
+            errors.add("EMBEDDING_MODEL_ID (app.embeddings.huggingface.model-id) is required but not set");
         }
         
         // Timeout validation
         int timeoutSeconds = huggingface.getTimeoutSeconds();
         if (timeoutSeconds <= 0) {
-            errors.add("ERROR: EMBEDDING_TIMEOUT_SECONDS (app.embeddings.huggingface.timeout-seconds) must be greater than 0");
+            errors.add("EMBEDDING_TIMEOUT_SECONDS (app.embeddings.huggingface.timeout-seconds) must be greater than 0");
         }
         
         // Dimension validation
         int dimension = huggingface.getDimension();
         if (dimension <= 0) {
-            errors.add("ERROR: EMBEDDING_DIMENSION (app.embeddings.huggingface.dimension) must be greater than 0");
+            errors.add("EMBEDDING_DIMENSION (app.embeddings.huggingface.dimension) must be greater than 0");
         }
     }
     
@@ -114,30 +114,30 @@ public class ConfigurationValidator {
         // Default limit validation
         int defaultLimit = matching.getDefaultLimit();
         if (defaultLimit <= 0) {
-            errors.add("ERROR: MATCH_DEFAULT_LIMIT (app.matching.default-limit) must be greater than 0");
+            errors.add("MATCH_DEFAULT_LIMIT (app.matching.default-limit) must be greater than 0");
         }
         
         // Max limit validation
         int maxLimit = matching.getMaxLimit();
         if (maxLimit <= 0) {
-            errors.add("ERROR: MATCH_MAX_LIMIT (app.matching.max-limit) must be greater than 0");
+            errors.add("MATCH_MAX_LIMIT (app.matching.max-limit) must be greater than 0");
         }
         
         // Min limit validation
         int minLimit = matching.getMinLimit();
         if (minLimit <= 0) {
-            errors.add("ERROR: MATCH_MIN_LIMIT (app.matching.min-limit) must be greater than 0");
+            errors.add("MATCH_MIN_LIMIT (app.matching.min-limit) must be greater than 0");
         }
         
         // Limit range validation
         if (minLimit > defaultLimit || defaultLimit > maxLimit) {
-            errors.add("ERROR: MATCH limits must satisfy: min-limit <= default-limit <= max-limit");
+            errors.add("MATCH limits must satisfy: min-limit <= default-limit <= max-limit");
         }
         
         // Confidence validation
         double defaultMinConfidence = matching.getDefaultMinConfidence();
         if (defaultMinConfidence < 0.0 || defaultMinConfidence > 1.0) {
-            errors.add("ERROR: MATCH_MIN_CONFIDENCE (app.matching.default-min-confidence) must be between 0.0 and 1.0");
+            errors.add("MATCH_MIN_CONFIDENCE (app.matching.default-min-confidence) must be between 0.0 and 1.0");
         }
         
         // Threshold validation
@@ -145,13 +145,13 @@ public class ConfigurationValidator {
         if (thresholds.getVeryStrong() < 0.0 || thresholds.getVeryStrong() > 1.0 ||
             thresholds.getGood() < 0.0 || thresholds.getGood() > 1.0 ||
             thresholds.getModerate() < 0.0 || thresholds.getModerate() > 1.0) {
-            errors.add("ERROR: MATCH thresholds must be between 0.0 and 1.0");
+            errors.add("MATCH thresholds must be between 0.0 and 1.0");
         }
         
         // Threshold ordering validation
         if (thresholds.getModerate() >= thresholds.getGood() || 
             thresholds.getGood() >= thresholds.getVeryStrong()) {
-            errors.add("ERROR: MATCH thresholds must satisfy: moderate < good < very-strong");
+            errors.add("MATCH thresholds must satisfy: moderate < good < very-strong");
         }
     }
 }
