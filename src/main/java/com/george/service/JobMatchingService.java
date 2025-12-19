@@ -54,9 +54,6 @@ public class JobMatchingService {
         if (userProfile == null || userProfile.trim().isEmpty()) {
             throw new IllegalArgumentException("User profile cannot be null or empty");
         }
-        if (appProperties == null || appProperties.getMatching() == null) {
-            throw new IllegalStateException("Matching configuration is not available");
-        }
         return findMatchingJobs(userProfile, 
             appProperties.getMatching().getDefaultLimit(), 
             appProperties.getMatching().getDefaultMinConfidence());
@@ -83,9 +80,6 @@ public class JobMatchingService {
         if (userProfile.length() > Constants.MAX_USER_PROFILE_LENGTH) {
             throw new IllegalArgumentException("User profile cannot exceed " + Constants.MAX_USER_PROFILE_LENGTH + " characters");
         }
-        if (appProperties == null || appProperties.getMatching() == null) {
-            throw new IllegalStateException("Matching configuration is not available");
-        }
         return findMatchingJobs(userProfile, 
             appProperties.getMatching().getDefaultLimit(), 
             appProperties.getMatching().getDefaultMinConfidence());
@@ -95,27 +89,6 @@ public class JobMatchingService {
     public List<JobMatch> findMatchingJobs(String userProfile, Integer limit, Double minConfidence) {
         if (userProfile == null || userProfile.trim().isEmpty()) {
             throw new IllegalArgumentException("User profile cannot be null or empty");
-        }
-        if (mongoClient == null) {
-            throw new IllegalStateException("MongoDB client is not available");
-        }
-        if (appProperties == null || appProperties.getMongodb() == null) {
-            throw new IllegalStateException("MongoDB configuration is not available");
-        }
-        if (embeddingCacheService == null) {
-            throw new IllegalStateException("EmbeddingCacheService is not available");
-        }
-        if (parameterNormalizer == null) {
-            throw new IllegalStateException("MatchingParameterNormalizer is not available");
-        }
-        if (queryBuilder == null) {
-            throw new IllegalStateException("VectorSearchQueryBuilder is not available");
-        }
-        if (documentMapper == null) {
-            throw new IllegalStateException("DocumentMapper is not available");
-        }
-        if (matchReasonGenerator == null) {
-            throw new IllegalStateException("MatchReasonGenerator is not available");
         }
 
         String processedProfile = parameterNormalizer.normalizeUserProfile(userProfile);
@@ -171,7 +144,7 @@ public class JobMatchingService {
         } catch (IllegalArgumentException | IllegalStateException | JobMatchingException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new JobMatchingException(ErrorCode.JOB_MATCHING_DATABASE_ERROR, "Failed to perform job matching", e);
+            throw new JobMatchingException(ErrorCode.JOB_MATCHING_FAILED, "Failed to perform job matching", e);
         }
     }
 }
