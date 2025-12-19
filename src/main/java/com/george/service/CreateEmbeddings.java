@@ -45,22 +45,6 @@ public class CreateEmbeddings {
     }
 
     public void createEmbeddings() {
-        if (postRepository == null) {
-            throw new IllegalStateException("PostRepository is not available");
-        }
-        if (embeddingProvider == null) {
-            throw new IllegalStateException("EmbeddingProvider is not available");
-        }
-        if (mongoClient == null) {
-            throw new IllegalStateException("MongoDB client is not available");
-        }
-        if (appProperties == null || appProperties.getMongodb() == null) {
-            throw new IllegalStateException("MongoDB configuration is not available");
-        }
-        if (documentConverter == null) {
-            throw new IllegalStateException("PostDocumentConverter is not available");
-        }
-
         List<Post> existingPosts = postRepository.findAll();
         
         if (existingPosts == null || existingPosts.isEmpty()) {
@@ -137,9 +121,7 @@ public class CreateEmbeddings {
             logger.info("Successfully inserted {} documents with embeddings", result.getInsertedIds().size());
         } catch (MongoException me) {
             throw new EmbeddingException(ErrorCode.EMBEDDING_GENERATION_FAILED, "Failed to perform MongoDB operation", me);
-        } catch (EmbeddingException e) {
-            throw e;
-        } catch (IllegalStateException e) {
+        } catch (EmbeddingException | IllegalStateException e) {
             throw e;
         } catch (RuntimeException e) {
             throw new EmbeddingException(ErrorCode.EMBEDDING_GENERATION_FAILED, "Failed to generate embeddings", e);
