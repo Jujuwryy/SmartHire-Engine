@@ -217,6 +217,7 @@ mvn test
 ```
 
 The test suite includes:
+- Testing for all layers (Controller, service, exception)
 - Unit tests for services (JobMatchingService, EmbeddingCacheService, MatchingParameterNormalizer)
 - Integration tests for API endpoints
 - Exception handler tests
